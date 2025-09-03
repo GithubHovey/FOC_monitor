@@ -1,0 +1,56 @@
+{
+  "name": "foc-monitor",
+  "version": "1.0.0",
+  "description": "FOC电机控制上位机软件",
+  "main": "src/backend/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac",
+    "pack": "electron-builder --dir"
+  },
+  "keywords": [
+    "foc",
+    "motor-control",
+    "electron",
+    "serialport"
+  ],
+  "author": "FOC开发团队",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^22.3.27",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.0",
+    "serialport": "^12.0.0",
+    "sqlite3": "^5.1.7"
+  },
+  "build": {
+    "appId": "com.foc.monitor",
+    "productName": "FOC电机控制上位机",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icons/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icons/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icons/icon.icns"
+    }
+  }
+}
