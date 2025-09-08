@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:">
     <title>FOC电机控制上位机</title>
     <link rel="stylesheet" href="../styles/main.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -19,6 +19,7 @@
                 <button class="menu-item" data-page="control">控制设置</button>
                 <button class="menu-item" data-page="config">参数配置</button>
                 <button class="menu-item" data-page="history">历史数据</button>
+                <button id="visibility-btn" class="menu-item visibility-btn">可视性控制</button>
             </nav>
             <div class="status-bar">
                 <span id="connection-status" class="status-offline">未连接</span>
@@ -28,19 +29,12 @@
 
         <!-- 主内容区域 -->
         <main class="main-content">
-            <!-- 左侧设备树和参数列表 -->
+            <!-- 左侧曲线选择侧边栏 -->
             <aside class="sidebar">
-                <div class="device-tree">
-                    <h3>设备列表</h3>
-                    <div class="device-list" id="device-list">
-                        <!-- 设备列表将通过JS动态生成 -->
-                    </div>
-                </div>
-                
-                <div class="parameter-list">
-                    <h3>监控参数</h3>
-                    <div class="parameter-controls" id="parameter-controls">
-                        <!-- 参数选择控件将通过JS动态生成 -->
+                <div class="curve-selection">
+                    <h3>打印曲线选择</h3>
+                    <div class="curve-controls" id="curve-controls">
+                        <!-- 曲线选择控件将通过JS动态生成 -->
                     </div>
                 </div>
             </aside>
@@ -76,37 +70,6 @@
 
             <!-- 右侧控制面板 -->
             <aside class="control-panel">
-                <div class="control-mode">
-                    <h3>控制模式</h3>
-                    <div class="mode-selector">
-                        <label class="radio-label">
-                            <input type="radio" name="control-mode" value="speed" checked>
-                            速度模式
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="control-mode" value="position">
-                            位置模式
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="control-mode" value="torque">
-                            力矩模式
-                        </label>
-                    </div>
-                </div>
-
-                <div class="pid-controls" id="pid-controls">
-                    <!-- PID参数控制将通过JS动态生成 -->
-                </div>
-
-                <div class="target-control">
-                    <h3>目标值设置</h3>
-                    <div class="target-input">
-                        <label for="target-value">目标值：</label>
-                        <input type="number" id="target-value" step="0.1">
-                        <button id="set-target-btn">设置</button>
-                    </div>
-                </div>
-
                 <div class="serial-config">
                     <h3>串口配置</h3>
                     <div class="serial-settings">
@@ -137,12 +100,11 @@
     </div>
 
     <!-- JavaScript文件 -->
+    <script src="../../node_modules/chart.js/dist/chart.umd.js"></script>
     <script src="../utils/serial.js"></script>
     <script src="../utils/chartManager.js"></script>
-    <script src="../utils/dataProcessor.js"></script>
-    <script src="../components/deviceManager.js"></script>
-    <script src="../components/controlManager.js"></script>
-    <script src="../components/configManager.js"></script>
+    <script src="../components/visibilityManager.js"></script>
+    <script src="../components/visibilityPanel.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

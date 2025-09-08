@@ -65,6 +65,18 @@ body {
     background: #e74c3c;
 }
 
+.visibility-btn {
+    background: #9b59b6 !important;
+}
+
+.visibility-btn:hover {
+    background: #8e44ad !important;
+}
+
+.visibility-btn.active {
+    background: #f39c12 !important;
+}
+
 .status-bar {
     display: flex;
     align-items: center;
@@ -163,6 +175,29 @@ body {
 .param-checkbox label {
     font-size: 14px;
     cursor: pointer;
+}
+
+/* 曲线选择控件 */
+.curve-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 5px 0;
+}
+
+.curve-control input {
+    width: 16px;
+    height: 16px;
+}
+
+.curve-control label {
+    font-size: 14px;
+    cursor: pointer;
+    color: #2c3e50;
+}
+
+.curve-control:hover label {
+    color: #3498db;
 }
 
 /* 图表区域 */

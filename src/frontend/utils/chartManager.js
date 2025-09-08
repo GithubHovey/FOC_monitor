@@ -10,6 +10,11 @@ class ChartManager {
         this.timeRange = 30; // 默认显示30秒数据
         this.maxDataPoints = 1000; // 最大数据点数量
         
+        // 确保Chart对象可用
+        if (typeof Chart === 'undefined') {
+            throw new Error('Chart.js库未正确加载，请检查HTML中的script标签');
+        }
+        
         this.init();
     }
 
@@ -68,8 +73,12 @@ class ChartManager {
         // 合并配置
         const mergedConfig = this.mergeConfigs(defaultConfig, config);
         
-        // 创建图表
-        this.chart = new Chart(this.ctx, mergedConfig);
+        // 创建图表 - 使用从Electron注入的Chart对象
+        const ChartConstructor = window.electronAPI?.Chart || window.Chart;
+        if (!ChartConstructor) {
+            throw new Error('Chart.js库未正确加载，请检查preload脚本');
+        }
+        this.chart = new ChartConstructor(this.ctx, mergedConfig);
     }
 
     // 合并配置对象
@@ -325,6 +334,48 @@ class ChartManager {
         }
     }
 
+    // 根据参数ID更新数据集可视性
+    updateDatasetVisibility(paramId, isVisible) {
+        if (!this.chart) return;
+        
+        // 查找包含参数ID的数据集
+        this.data.datasets.forEach((dataset, index) => {
+            if ((dataset.paramId && dataset.paramId === paramId) || 
+                (dataset.label && dataset.label.includes(paramId))) {
+                const meta = this.chart.getDatasetMeta(index);
+                meta.hidden = !isVisible;
+            }
+        });
+        
+        this.chart.update();
+    }
+
+    // 获取数据集的可视性状态
+    getDatasetVisibility(index) {
+        if (!this.chart || index < 0 || index >= this.data.datasets.length) {
+            return false;
+        }
+        
+        const meta = this.chart.getDatasetMeta(index);
+        return !meta.hidden;
+    }
+
+    // 根据标签名查找数据集索引
+    findDatasetIndexByLabel(labelPattern) {
+        return this.data.datasets.findIndex(dataset => 
+            dataset.label && dataset.label.includes(labelPattern)
+        );
+    }
+
+    // 批量更新数据集可视性
+    updateMultipleDatasetsVisibility(visibilityMap) {
+        if (!this.chart) return;
+        
+        Object.entries(visibilityMap).forEach(([paramId, isVisible]) => {
+            this.updateDatasetVisibility(paramId, isVisible);
+        });
+    }
+
     // 获取可见的数据集数量
     getVisibleDatasetCount() {
         if (!this.chart) return 0;
@@ -336,4 +387,5 @@ class ChartManager {
     }
 }
 
-export default ChartManager;
+// 创建全局图表管理器实例
+window.ChartManager = ChartManager;

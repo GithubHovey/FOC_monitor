@@ -343,5 +343,3 @@ class SerialManager {
 
 // 创建全局串口管理器实例
 window.serialManager = new SerialManager();
-
-export default SerialManager;

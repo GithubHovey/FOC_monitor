@@ -1,7 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// 在Electron环境中，Chart.js需要通过window.Chart访问
+// 这里我们直接注入Chart类到渲染进程
+
 // 暴露安全的API给渲染进程
 contextBridge.exposeInMainWorld('electronAPI', {
+  // 串口相关API
   // 串口相关API
   getSerialPorts: () => ipcRenderer.invoke('get-serial-ports'),
   openSerialPort: (portName, options) => ipcRenderer.invoke('open-serial-port', portName, options),

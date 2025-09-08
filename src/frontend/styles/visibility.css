@@ -1,0 +1,327 @@
+/* FOC电机控制上位机 - 可视性控制面板样式 */
+
+.visibility-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    max-width: 90vw;
+    max-height: 80vh;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.visibility-panel * {
+    box-sizing: border-box;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    font-weight: bold;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.close-btn:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.panel-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.tab-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #6c757d;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    color: #495057;
+    background-color: #e9ecef;
+}
+
+.tab-btn.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background-color: #e3f2fd;
+}
+
+.panel-content {
+    padding: 0;
+    overflow-y: auto;
+    max-height: calc(80vh - 150px);
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.parameter-group {
+    margin-bottom: 0;
+}
+
+.parameter-group h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.parameter-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.parameter-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    user-select: none;
+}
+
+.parameter-item:hover {
+    background-color: #f8f9fa;
+}
+
+.parameter-item input[type="checkbox"] {
+    margin: 0 8px 0 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #007bff;
+}
+
+.parameter-item span {
+    font-size: 13px;
+    color: #495057;
+    flex: 1;
+}
+
+.panel-footer {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 60px;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+    border-color: #545b62;
+}
+
+.btn-outline {
+    background-color: transparent;
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-outline:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .visibility-panel {
+        width: 95vw;
+        max-height: 90vh;
+    }
+    
+    .panel-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        min-width: 60px;
+        font-size: 11px;
+        padding: 8px 12px;
+    }
+    
+    .parameter-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .panel-footer {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .panel-header {
+        padding: 12px 16px;
+    }
+    
+    .panel-header h3 {
+        font-size: 14px;
+    }
+    
+    .tab-content {
+        padding: 16px;
+    }
+    
+    .parameter-item {
+        padding: 6px 8px;
+    }
+    
+    .parameter-item span {
+        font-size: 12px;
+    }
+}
+
+/* 滚动条样式 */
+.visibility-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.visibility-panel::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.visibility-panel::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.visibility-panel::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 动画效果 */
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.visibility-message {
+    animation: fadeInOut 2s ease-in-out !important;
+}
+
+/* 遮罩层 */
+.visibility-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+}
+
+/* 高亮选中状态 */
+.parameter-item:has(input:checked) {
+    background-color: #e3f2fd;
+    border-color: #007bff;
+}
+
+.parameter-item:has(input:checked) span {
+    color: #007bff;
+    font-weight: 500;
+}
+
+/* 禁用状态 */
+.parameter-item:has(input:disabled) {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.parameter-item:has(input:disabled):hover {
+    background-color: transparent;
+}

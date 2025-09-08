@@ -7,6 +7,8 @@ class FOCMonitorApp {
         this.startTime = Date.now();
         this.chartManager = null;
         this.serialManager = window.serialManager;
+        this.visibilityManager = null;
+        this.visibilityPanel = null;
         
         this.init();
     }
@@ -23,8 +25,10 @@ class FOCMonitorApp {
 
             // 初始化各个模块
             await this.initChartManager();
+            await this.initVisibilityManager();
             this.initEventListeners();
             this.initSerialPorts();
+            this.initCurveSelection();
             this.startStatusUpdates();
 
             this.isInitialized = true;
@@ -39,9 +43,8 @@ class FOCMonitorApp {
     // 初始化图表管理器
     async initChartManager() {
         try {
-            // 动态导入图表管理器
-            const { default: ChartManager } = await import('../utils/chartManager.js');
-            this.chartManager = new ChartManager('main-chart');
+            // 使用全局图表管理器
+            this.chartManager = new window.ChartManager('main-chart');
             
             // 初始化默认图表
             this.chartManager.initChart({
@@ -79,6 +82,38 @@ class FOCMonitorApp {
         }
     }
 
+    // 初始化可视性管理器
+    async initVisibilityManager() {
+        try {
+            // 使用全局可视性管理器
+            this.visibilityManager = window.visibilityManager;
+            this.visibilityPanel = window.visibilityPanel;
+            
+            // 加载CSS样式
+            this.loadVisibilityStyles();
+            
+            // 注册可视性变化回调
+            if (this.visibilityManager && this.visibilityManager.onVisibilityChange) {
+                this.visibilityManager.onVisibilityChange((paramId, isVisible) => {
+                    this.handleVisibilityChange(paramId, isVisible);
+                });
+            }
+            
+            console.log('可视性管理器初始化完成');
+            
+        } catch (error) {
+            console.error('可视性管理器初始化失败:', error);
+        }
+    }
+
+    // 加载可视性样式
+    loadVisibilityStyles() {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '../styles/visibility.css';
+        document.head.appendChild(link);
+    }
+
     // 初始化事件监听器
     initEventListeners() {
         // 菜单按钮点击事件
@@ -86,6 +121,11 @@ class FOCMonitorApp {
             button.addEventListener('click', (e) => {
                 this.switchPage(e.target.dataset.page);
             });
+        });
+
+        // 可视性控制按钮事件
+        document.getElementById('visibility-btn').addEventListener('click', () => {
+            this.toggleVisibilityPanel();
         });
 
         // 标签页切换事件
@@ -113,17 +153,7 @@ class FOCMonitorApp {
             this.toggleSerialConnection();
         });
 
-        // 目标值设置事件
-        document.getElementById('set-target-btn').addEventListener('click', () => {
-            this.setTargetValue();
-        });
 
-        // 控制模式切换事件
-        document.querySelectorAll('input[name="control-mode"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.switchControlMode(e.target.value);
-            });
-        });
 
         // 时间范围选择事件
         document.getElementById('time-range-select').addEventListener('change', (e) => {
@@ -199,9 +229,9 @@ class FOCMonitorApp {
         switch (tab) {
             case 'current':
                 datasets.push(
-                    this.createDataset('Ia (A)', '#FF6384'),
-                    this.createDataset('Ib (A)', '#36A2EB'),
-                    this.createDataset('Ic (A)', '#FFCE56')
+                    this.createDataset('相电流A (A)', '#FF6384'),
+                    this.createDataset('相电流B (A)', '#36A2EB'),
+                    this.createDataset('相电流C (A)', '#FFCE56')
                 );
                 break;
             case 'voltage':
@@ -231,6 +261,20 @@ class FOCMonitorApp {
 
     // 创建数据集配置
     createDataset(label, color) {
+        // 提取参数ID用于曲线选择功能
+        let paramId = '';
+        if (label.includes('相电流A')) paramId = 'ia';
+        else if (label.includes('相电流B')) paramId = 'ib';
+        else if (label.includes('相电流C')) paramId = 'ic';
+        else if (label.includes('Vq_ref')) paramId = 'vq_ref';
+        else if (label.includes('Vd_ref')) paramId = 'vd_ref';
+        else if (label.includes('Vq')) paramId = 'vq';
+        else if (label.includes('Vd')) paramId = 'vd';
+        else if (label.includes('目标转速')) paramId = 'rpm_ref';
+        else if (label.includes('当前转速')) paramId = 'rpm';
+        else if (label.includes('目标位置')) paramId = 'position_ref';
+        else if (label.includes('当前位置')) paramId = 'position';
+        
         return {
             label: label,
             borderColor: color,
@@ -239,7 +283,8 @@ class FOCMonitorApp {
             pointRadius: 0,
             fill: false,
             tension: 0.1,
-            data: []
+            data: [],
+            paramId: paramId // 添加参数ID用于曲线选择
         };
     }
 
@@ -352,8 +397,32 @@ class FOCMonitorApp {
             }
         };
         
-        // 更新图表数据
+        // 更新图表数据（根据可视性设置过滤）
         this.updateChartData(timestamp, parameters);
+    }
+
+    // 处理可视性变化
+    handleVisibilityChange(paramId, isVisible) {
+        console.log(`参数 ${paramId} 可视性变化: ${isVisible ? '显示' : '隐藏'}`);
+        
+        // 根据参数ID更新图表显示
+        this.updateChartVisibility(paramId, isVisible);
+        
+        // 如果需要，可以在这里添加其他可视性相关的逻辑
+    }
+
+    // 更新图表可视性
+    updateChartVisibility(paramId, isVisible) {
+        if (this.chartManager && this.chartManager.updateDatasetVisibility) {
+            this.chartManager.updateDatasetVisibility(paramId, isVisible);
+        }
+    }
+
+    // 切换可视性面板
+    toggleVisibilityPanel() {
+        if (window.visibilityPanel) {
+            window.visibilityPanel.toggle();
+        }
     }
 
     // 从字节数组解码浮点数
@@ -484,57 +553,56 @@ class FOCMonitorApp {
         return csv;
     }
 
-    // 设置目标值
-    setTargetValue() {
-        const targetValue = parseFloat(document.getElementById('target-value').value);
+    // 初始化曲线选择控件
+    initCurveSelection() {
+        const curveControls = document.getElementById('curve-controls');
         
-        if (isNaN(targetValue)) {
-            this.showError('请输入有效的目标值');
-            return;
-        }
+        // 定义需要显示的曲线参数（根据需求文档2.1节）
+        const curveParameters = [
+            { id: 'iq_ref', label: '目标Q轴电流', defaultVisible: true },
+            { id: 'ia', label: '相电流A', defaultVisible: true },
+            { id: 'ib', label: '相电流B', defaultVisible: true },
+            { id: 'ic', label: '相电流C', defaultVisible: true },
+            { id: 'rpm_ref', label: '目标转速', defaultVisible: true },
+            { id: 'rpm', label: '当前转速', defaultVisible: true },
+            { id: 'position_ref', label: '目标位置', defaultVisible: true },
+            { id: 'position', label: '当前位置', defaultVisible: true }
+        ];
         
-        // 获取当前控制模式
-        const controlMode = document.querySelector('input[name="control-mode"]:checked').value;
-        
-        // 发送目标值设置命令
-        this.sendTargetValue(controlMode, targetValue);
+        // 创建曲线选择控件
+        curveParameters.forEach(param => {
+            const controlDiv = document.createElement('div');
+            controlDiv.className = 'curve-control';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `curve-${param.id}`;
+            checkbox.checked = param.defaultVisible;
+            checkbox.addEventListener('change', (e) => {
+                this.toggleCurveVisibility(param.id, e.target.checked);
+            });
+            
+            const label = document.createElement('label');
+            label.htmlFor = `curve-${param.id}`;
+            label.textContent = param.label;
+            
+            controlDiv.appendChild(checkbox);
+            controlDiv.appendChild(label);
+            curveControls.appendChild(controlDiv);
+        });
     }
-
-    // 发送目标值设置命令
-    async sendTargetValue(mode, value) {
-        let command;
-        
-        switch (mode) {
-            case 'speed':
-                command = 0x03; // 速度目标值
-                break;
-            case 'position':
-                command = 0x04; // 位置目标值
-                break;
-            case 'torque':
-                command = 0x05; // 力矩目标值
-                break;
-            default:
-                this.showError('未知的控制模式');
-                return;
-        }
-        
-        try {
-            await this.serialManager.sendFOCCommand(command, value);
-            this.showSuccess(`目标值设置成功: ${value}`);
-        } catch (error) {
-            this.showError('设置目标值失败: ' + error.message);
+    
+    // 切换曲线可视性
+    toggleCurveVisibility(paramId, isVisible) {
+        if (this.chartManager && this.chartManager.updateDatasetVisibility) {
+            this.chartManager.updateDatasetVisibility(paramId, isVisible);
         }
     }
-
+    
     // 切换控制模式
     switchControlMode(mode) {
         let command;
-        
         switch (mode) {
-            case 'speed':
-                command = 0x10; // 速度模式
-                break;
             case 'position':
                 command = 0x11; // 位置模式
                 break;
@@ -590,6 +658,3 @@ class FOCMonitorApp {
 window.addEventListener('load', () => {
     window.focMonitorApp = new FOCMonitorApp();
 });
-
-// 导出应用类（用于模块化导入）
-export default FOCMonitorApp;
