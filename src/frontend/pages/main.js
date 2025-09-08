@@ -47,7 +47,7 @@ class FOCMonitorApp {
             this.chartManager = new window.ChartManager('main-chart');
             
             // 初始化默认图表
-            this.chartManager.initChart({
+            this.chartManager.init({
                 type: 'line',
                 data: {
                     datasets: []

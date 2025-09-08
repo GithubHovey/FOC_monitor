@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// 在Electron环境中，Chart.js需要通过window.Chart访问
-// 这里我们直接注入Chart类到渲染进程
+// 在Electron环境中，Chart.js已经通过HTML中的CDN链接加载
+// 这里我们不再需要注入Chart类
 
 // 暴露安全的API给渲染进程
 contextBridge.exposeInMainWorld('electronAPI', {

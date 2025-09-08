@@ -73,12 +73,16 @@ class ChartManager {
         // 合并配置
         const mergedConfig = this.mergeConfigs(defaultConfig, config);
         
-        // 创建图表 - 使用从Electron注入的Chart对象
-        const ChartConstructor = window.electronAPI?.Chart || window.Chart;
-        if (!ChartConstructor) {
-            throw new Error('Chart.js库未正确加载，请检查preload脚本');
+        // 销毁之前的图表实例（如果存在）
+        if (this.chart) {
+            this.chart.destroy();
         }
-        this.chart = new ChartConstructor(this.ctx, mergedConfig);
+        
+        // 创建图表 - 使用全局Chart对象
+        if (typeof Chart === 'undefined') {
+            throw new Error('Chart.js库未正确加载，请检查HTML中的script标签');
+        }
+        this.chart = new Chart(this.ctx, mergedConfig);
     }
 
     // 合并配置对象
