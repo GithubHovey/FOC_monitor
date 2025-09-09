@@ -29,6 +29,8 @@ class FOCMonitorApp {
             this.initEventListeners();
             this.initSerialPorts();
             this.initCurveSelection();
+            this.initCustomDataSender();
+            this.initModeControls();
             this.startStatusUpdates();
 
             this.isInitialized = true;
@@ -192,6 +194,11 @@ class FOCMonitorApp {
         } catch (error) {
             console.error('获取串口列表失败:', error);
         }
+    }
+
+    // 初始化自定义数据发送器
+    initCustomDataSender() {
+        this.customDataSender = new CustomDataSenderUI(this.serialManager);
     }
 
     // 切换页面
@@ -589,6 +596,137 @@ class FOCMonitorApp {
             controlDiv.appendChild(checkbox);
             controlDiv.appendChild(label);
             curveControls.appendChild(controlDiv);
+        });
+    }
+
+    // 初始化模式控制功能
+    initModeControls() {
+        // 模式选择器事件
+        const modeSelector = document.getElementById('control-mode-select');
+        modeSelector.addEventListener('change', (e) => {
+            this.updateModeControls(e.target.value);
+        });
+
+        // 初始化默认模式
+        this.updateModeControls('torque');
+
+        // 进度条事件
+        this.initSliderEvents();
+
+        // 校准按钮事件
+        const calibrateBtn = document.getElementById('send-calibration-btn');
+        calibrateBtn.addEventListener('click', () => {
+            this.sendCalibrationCommand();
+        });
+    }
+
+    // 更新模式控制界面
+    updateModeControls(selectedMode) {
+        // 隐藏所有模式控制块
+        const modeControls = document.querySelectorAll('.mode-control');
+        modeControls.forEach(control => {
+            control.style.display = 'none';
+        });
+
+        // 显示选中的模式控制块
+        const selectedControl = document.querySelector(`.${selectedMode}-mode`);
+        if (selectedControl) {
+            selectedControl.style.display = 'block';
+        }
+
+        // 更新当前模式
+        this.currentMode = selectedMode;
+    }
+
+    // 初始化进度条事件
+    initSliderEvents() {
+        const sliders = document.querySelectorAll('input[type="range"]');
+        sliders.forEach(slider => {
+            // 获取对应的值显示元素
+            const valueDisplayId = slider.id.replace('-slider', '-value');
+            const valueDisplay = document.getElementById(valueDisplayId);
+            
+            // 显示当前值
+            if (valueDisplay) {
+                valueDisplay.textContent = slider.value;
+            }
+
+            // 值变化事件
+            slider.addEventListener('input', (e) => {
+                const valueDisplayId = e.target.id.replace('-slider', '-value');
+                const valueDisplay = document.getElementById(valueDisplayId);
+                if (valueDisplay) {
+                    valueDisplay.textContent = e.target.value;
+                }
+            });
+
+            // 值改变事件（发送命令）
+            slider.addEventListener('change', (e) => {
+                this.sendModeCommand(e.target.id, parseFloat(e.target.value));
+            });
+        });
+    }
+
+    // 发送模式命令
+    sendModeCommand(controlId, value) {
+        if (!this.serialManager || !this.serialManager.isConnected()) {
+            this.showError('串口未连接，无法发送命令');
+            return;
+        }
+
+        // 创建14字节数据包（全0x55，后续可替换为实际协议）
+        const data = new Uint8Array(14);
+        data.fill(0x55);
+
+        // 根据控制ID设置不同的命令类型
+        let commandType = 0;
+        switch (controlId) {
+            case 'torque-slider':
+                commandType = 0x01; // 力矩模式命令
+                // 将0-100的值映射到协议范围
+                data[0] = commandType;
+                data[1] = Math.round(value * 2.55); // 0-100 -> 0-255
+                break;
+            case 'speed-slider':
+                commandType = 0x02; // 速度模式命令
+                data[0] = commandType;
+                data[1] = Math.round(value * 2.55); // 0-100 -> 0-255
+                break;
+            case 'position-slider':
+                commandType = 0x03; // 位置模式命令
+                data[0] = commandType;
+                // 将0-360度的值转换为两个字节
+                const positionValue = Math.round((value / 360) * 65535);
+                data[1] = (positionValue >> 8) & 0xFF;
+                data[2] = positionValue & 0xFF;
+                break;
+        }
+
+        // 发送数据
+        this.serialManager.sendData(data).then(() => {
+            console.log(`发送${controlId}命令成功，值: ${value}`);
+        }).catch(error => {
+            this.showError(`发送命令失败: ${error.message}`);
+        });
+    }
+
+    // 发送校准命令
+    sendCalibrationCommand() {
+        if (!this.serialManager || !this.serialManager.isConnected()) {
+            this.showError('串口未连接，无法发送命令');
+            return;
+        }
+
+        // 创建14字节校准数据包（全0x55，后续可替换为实际协议）
+        const data = new Uint8Array(14);
+        data.fill(0x55);
+        data[0] = 0x04; // 校准模式命令
+
+        // 发送数据
+        this.serialManager.sendData(data).then(() => {
+            this.showSuccess('校准命令发送成功');
+        }).catch(error => {
+            this.showError(`发送校准命令失败: ${error.message}`);
         });
     }
     

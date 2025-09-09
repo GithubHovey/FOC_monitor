@@ -37,6 +37,25 @@
                         <!-- 曲线选择控件将通过JS动态生成 -->
                     </div>
                 </div>
+                
+                <!-- 串口配置（移到曲线选择下方） -->
+                <div class="serial-config">
+                    <h3>串口配置</h3>
+                    <div class="serial-settings">
+                        <select id="serial-port-select">
+                            <option value="">选择串口</option>
+                        </select>
+                        <select id="baud-rate-select">
+                            <option value="9600">9600</option>
+                            <option value="19200">19200</option>
+                            <option value="38400">38400</option>
+                            <option value="57600">57600</option>
+                            <option value="115200" selected>115200</option>
+                            <option value="1500000">1.5M</option>
+                        </select>
+                        <button id="connect-btn" class="connect-btn">连接</button>
+                    </div>
+                </div>
             </aside>
 
             <!-- 中部图表区域 -->
@@ -68,22 +87,87 @@
                 </div>
             </section>
 
-            <!-- 右侧控制面板 -->
-            <aside class="control-panel">
-                <div class="serial-config">
-                    <h3>串口配置</h3>
-                    <div class="serial-settings">
-                        <select id="serial-port-select">
-                            <option value="">选择串口</option>
+            <!-- 右侧数据发送面板 -->
+            <aside class="data-sender-panel">
+                <!-- 1. 自定义数据发送 -->
+                <div class="custom-data-sender">
+                    <h3>自定义数据发送</h3>
+                    <div class="sender-controls">
+                        <select id="data-format-select">
+                            <option value="hex">十六进制</option>
+                            <option value="ascii">ASCII</option>
+                            <option value="utf8">UTF-8</option>
+                            <option value="decimal">十进制</option>
+                            <option value="binary">二进制</option>
                         </select>
-                        <select id="baud-rate-select">
-                            <option value="9600">9600</option>
-                            <option value="19200">19200</option>
-                            <option value="38400">38400</option>
-                            <option value="57600">57600</option>
-                            <option value="115200" selected>115200</option>
+                        <textarea id="custom-data-input" placeholder="输入要发送的数据..."></textarea>
+                        <button id="send-data-btn" class="send-btn">发送数据</button>
+                        <button id="clear-data-btn" class="clear-btn">清除</button>
+                        
+                        <!-- 测试模式生成器 -->
+                        <div class="test-pattern-generator">
+                            <h4>测试模式生成</h4>
+                            <select id="test-pattern-select">
+                                <option value="increment">递增序列</option>
+                                <option value="decrement">递减序列</option>
+                                <option value="random">随机数据</option>
+                                <option value="alternating">交替模式</option>
+                            </select>
+                            <input type="number" id="pattern-length" placeholder="长度" min="1" max="256" value="16">
+                            <button id="generate-pattern-btn" class="generate-btn">生成模式</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 模式设置 -->
+                <div class="mode-controls">
+                    <h3>模式设置</h3>
+                    
+                    <!-- 模式选择 -->
+                    <div class="mode-selector">
+                        <label>控制模式:</label>
+                        <select id="control-mode-select">
+                            <option value="torque">力矩模式</option>
+                            <option value="speed">速度模式</option>
+                            <option value="position">位置模式</option>
+                            <option value="calibration">校准模式</option>
                         </select>
-                        <button id="connect-btn" class="connect-btn">连接</button>
+                    </div>
+
+                    <!-- 力矩模式控制 -->
+                    <div class="mode-control torque-mode" style="display: none;">
+                        <h4>力矩控制</h4>
+                        <div class="slider-control">
+                            <label>力矩值: <span id="torque-value">0</span>%</label>
+                            <input type="range" id="torque-slider" min="0" max="100" value="0" step="1">
+                        </div>
+                        <button id="send-torque-btn" class="send-btn">发送力矩指令</button>
+                    </div>
+
+                    <!-- 速度模式控制 -->
+                    <div class="mode-control speed-mode" style="display: none;">
+                        <h4>速度控制</h4>
+                        <div class="slider-control">
+                            <label>速度值: <span id="speed-value">0</span>%</label>
+                            <input type="range" id="speed-slider" min="0" max="100" value="0" step="1">
+                        </div>
+                        <button id="send-speed-btn" class="send-btn">发送速度指令</button>
+                    </div>
+
+                    <!-- 位置模式控制 -->
+                    <div class="mode-control position-mode" style="display: none;">
+                        <h4>位置控制</h4>
+                        <div class="slider-control">
+                            <label>位置值: <span id="position-value">0.0</span>°</label>
+                            <input type="range" id="position-slider" min="0" max="360" value="0" step="0.1">
+                        </div>
+                        <button id="send-position-btn" class="send-btn">发送位置指令</button>
+                    </div>
+
+                    <!-- 校准模式控制 -->
+                    <div class="mode-control calibration-mode" style="display: none;">
+                        <h4>校准模式</h4>
+                        <button id="send-calibration-btn" class="send-btn">发送校准指令</button>
                     </div>
                 </div>
             </aside>
@@ -105,6 +189,7 @@
     <script src="../utils/chartManager.js"></script>
     <script src="../components/visibilityManager.js"></script>
     <script src="../components/visibilityPanel.js"></script>
+    <script src="../utils/customDataSender.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

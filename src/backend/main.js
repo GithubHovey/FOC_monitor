@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const SerialPort = require('serialport');
+const { SerialPort } = require('serialport');
 
 // 保持对窗口对象的全局引用
 let mainWindow;

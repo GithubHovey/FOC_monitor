@@ -64,13 +64,13 @@ class SerialManager {
         
         try {
             this.port = new SerialPort({
-                path: portPath,
-                baudRate: this.baudRate,
-                dataBits: 8,
-                parity: 'none',
-                stopBits: 1,
-                autoOpen: false
-            });
+            path: portPath,
+            baudRate: this.baudRate,
+            dataBits: 8,
+            parity: 'none',
+            stopBits: 1,
+            autoOpen: false
+        });
 
             // 设置解析器
             this.parser = this.port.pipe(new ReadlineParser({ delimiter: '\n' }));
