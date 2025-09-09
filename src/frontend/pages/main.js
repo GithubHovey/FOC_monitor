@@ -1,4 +1,6 @@
 // FOC电机控制上位机 - 主应用脚本
+import ControlTerminal from '../components/controlTerminal.js';
+
 class FOCMonitorApp {
     constructor() {
         this.isInitialized = false;
@@ -198,7 +200,8 @@ class FOCMonitorApp {
 
     // 初始化自定义数据发送器
     initCustomDataSender() {
-        this.customDataSender = new ControlTerminal(this.serialManager);
+        // 使用全局的serialManager实例（来自serial.js）
+        this.customDataSender = new ControlTerminal(window.serialManager);
     }
 
     // 切换页面

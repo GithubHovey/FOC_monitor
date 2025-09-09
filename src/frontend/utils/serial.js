@@ -32,7 +32,7 @@ class SerialManager {
             
             const ports = await window.electronAPI.getSerialPorts();
             return ports.filter(port => 
-                port.path && !port.path.includes('Bluetooth') && !port.path.includes('COM1')
+                port.path && !port.path.includes('Bluetooth')
             );
         } catch (error) {
             console.error('获取串口列表失败:', error);
