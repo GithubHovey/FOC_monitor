@@ -198,7 +198,7 @@ class FOCMonitorApp {
 
     // 初始化自定义数据发送器
     initCustomDataSender() {
-        this.customDataSender = new CustomDataSenderUI(this.serialManager);
+        this.customDataSender = new ControlTerminal(this.serialManager);
     }
 
     // 切换页面

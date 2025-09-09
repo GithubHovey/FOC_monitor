@@ -1,19 +1,11 @@
-class CustomDataSenderUI {
+class ControlTerminal {
     constructor() {
         this.customDataSender = null;
         this.isConnected = false;
+        this.elements = {};
         
-        // 初始化DOM元素
         this.initializeElements();
-        
-        // 等待DOM加载完成后再绑定事件
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.bindEvents();
-            });
-        } else {
-            this.bindEvents();
-        }
+        this.bindEvents();
     }
 
     // 初始化自定义数据发送器
@@ -57,7 +49,7 @@ class CustomDataSenderUI {
     bindEvents() {
         // 检查元素是否存在
         if (!this.elements.sendDataBtn || !this.elements.clearDataBtn || !this.elements.customDataInput) {
-            console.warn('自定义数据发送器元素未找到，事件绑定失败');
+            console.warn('控制终端元素未找到，事件绑定失败');
             return;
         }
 
@@ -68,8 +60,6 @@ class CustomDataSenderUI {
         this.elements.clearDataBtn.addEventListener('click', () => {
             this.clearData();
         });
-
-
 
         // 回车键发送
         this.elements.customDataInput.addEventListener('keydown', (e) => {
@@ -114,8 +104,6 @@ class CustomDataSenderUI {
         }
     }
 
-
-
     // 清除数据
     clearData() {
         this.elements.customDataInput.value = '';
@@ -157,16 +145,22 @@ class CustomDataSenderUI {
             font-size: 14px;
         `;
 
-        // 根据类型设置背景色
-        const colors = {
-            success: '#4caf50',
-            error: '#f44336',
-            warning: '#ff9800',
-            info: '#2196f3'
-        };
-        messageEl.style.backgroundColor = colors[type] || colors.info;
+        // 设置不同消息类型的背景色
+        switch (type) {
+            case 'success':
+                messageEl.style.backgroundColor = '#28a745';
+                break;
+            case 'error':
+                messageEl.style.backgroundColor = '#dc3545';
+                break;
+            case 'warning':
+                messageEl.style.backgroundColor = '#ffc107';
+                messageEl.style.color = '#212529';
+                break;
+            default:
+                messageEl.style.backgroundColor = '#17a2b8';
+        }
 
-        // 添加到页面
         document.body.appendChild(messageEl);
 
         // 3秒后自动移除
@@ -179,65 +173,9 @@ class CustomDataSenderUI {
 
     // 记录发送结果
     logSendResult(result, success) {
-        const logEntry = {
-            timestamp: new Date().toLocaleString(),
-            success: success,
-            data: result.data,
-            format: result.format,
-            type: result.type || 'custom_data'
-        };
-
-        console.log('发送记录:', logEntry);
-        
-        // 这里可以添加将日志保存到文件或数据库的功能
-    }
-
-    // 批量发送数据
-    async sendBatch(dataArray, format = 'hex', interval = 100) {
-        if (!this.isConnected) {
-            this.showMessage('请先连接串口', 'warning');
-            return [];
-        }
-
-        try {
-            this.elements.sendDataBtn.disabled = true;
-            this.elements.sendDataBtn.textContent = '批量发送中...';
-            
-            const results = await this.customDataSender.sendBatch(dataArray, format, interval);
-            
-            // 统计结果
-            const successCount = results.filter(r => r.success).length;
-            const totalCount = results.length;
-            
-            this.showMessage(`批量发送完成: ${successCount}/${totalCount} 成功`, 'info');
-            
-            return results;
-            
-        } catch (error) {
-            console.error('批量发送失败:', error);
-            this.showMessage('批量发送失败: ' + error.message, 'error');
-            return [];
-        } finally {
-            this.elements.sendDataBtn.disabled = false;
-            this.elements.sendDataBtn.textContent = '发送数据';
-        }
-    }
-
-    // 销毁
-    destroy() {
-        // 移除事件监听器
-        if (this.elements.sendDataBtn) {
-            this.elements.sendDataBtn.removeEventListener('click', this.sendCustomData);
-        }
-        if (this.elements.clearDataBtn) {
-            this.elements.clearDataBtn.removeEventListener('click', this.clearData);
-        }
-        if (this.elements.generatePatternBtn) {
-            this.elements.generatePatternBtn.removeEventListener('click', this.generateTestPattern);
-        }
-        
-        this.customDataSender = null;
+        console.log(`${success ? '✓' : '✗'} 数据发送结果:`, result);
     }
 }
 
-// module.exports = CustomDataSenderUI;
+// 导出模块
+export default ControlTerminal;
