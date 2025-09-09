@@ -49,17 +49,14 @@ class CustomDataSenderUI {
             dataFormatSelect: document.getElementById('data-format-select'),
             customDataInput: document.getElementById('custom-data-input'),
             sendDataBtn: document.getElementById('send-data-btn'),
-            clearDataBtn: document.getElementById('clear-data-btn'),
-            testPatternSelect: document.getElementById('test-pattern-select'),
-            patternLengthInput: document.getElementById('pattern-length'),
-            generatePatternBtn: document.getElementById('generate-pattern-btn')
+            clearDataBtn: document.getElementById('clear-data-btn')
         };
     }
 
     // 绑定事件
     bindEvents() {
         // 检查元素是否存在
-        if (!this.elements.sendDataBtn || !this.elements.clearDataBtn || !this.elements.generatePatternBtn || !this.elements.customDataInput) {
+        if (!this.elements.sendDataBtn || !this.elements.clearDataBtn || !this.elements.customDataInput) {
             console.warn('自定义数据发送器元素未找到，事件绑定失败');
             return;
         }
@@ -72,9 +69,7 @@ class CustomDataSenderUI {
             this.clearData();
         });
 
-        this.elements.generatePatternBtn.addEventListener('click', () => {
-            this.generateTestPattern();
-        });
+
 
         // 回车键发送
         this.elements.customDataInput.addEventListener('keydown', (e) => {
@@ -119,43 +114,7 @@ class CustomDataSenderUI {
         }
     }
 
-    // 生成测试模式
-    generateTestPattern() {
-        const patternType = this.elements.testPatternSelect.value;
-        const length = parseInt(this.elements.patternLengthInput.value) || 16;
 
-        if (length < 1 || length > 256) {
-            this.showMessage('长度必须在1-256之间', 'warning');
-            return;
-        }
-
-        try {
-            const pattern = this.customDataSender.generateTestPattern(patternType, length);
-            
-            // 根据当前选择的格式显示模式
-            const format = this.elements.dataFormatSelect.value;
-            let displayText = '';
-
-            switch (format) {
-                case 'hex':
-                    displayText = Array.from(pattern).map(b => b.toString(16).padStart(2, '0')).join(' ');
-                    break;
-                case 'decimal':
-                    displayText = Array.from(pattern).join(' ');
-                    break;
-                case 'binary':
-                    displayText = Array.from(pattern).map(b => b.toString(2).padStart(8, '0')).join(' ');
-                    break;
-                default:
-                    displayText = pattern.toString('ascii');
-            }
-
-            this.elements.customDataInput.value = displayText;
-            
-        } catch (error) {
-            this.showMessage('生成模式失败: ' + error.message, 'error');
-        }
-    }
 
     // 清除数据
     clearData() {
@@ -167,8 +126,7 @@ class CustomDataSenderUI {
     updateUIState() {
         const elements = [
             this.elements.sendDataBtn,
-            this.elements.clearDataBtn,
-            this.elements.generatePatternBtn
+            this.elements.clearDataBtn
         ];
 
         elements.forEach(element => {
