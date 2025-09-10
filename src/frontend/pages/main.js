@@ -1,5 +1,6 @@
 // FOC电机控制上位机 - 主应用脚本
-import ControlTerminal from '../components/controlTerminal.js';
+
+import DataCommunicationManager from '../utils/dataCommunication.js';
 
 class FOCMonitorApp {
     constructor() {
@@ -26,14 +27,15 @@ class FOCMonitorApp {
             }
 
             // 初始化各个模块
-            await this.initChartManager();
-            await this.initVisibilityManager();
-            this.initEventListeners();
-            this.initSerialPorts();
-            this.initCurveSelection();
-            this.initCustomDataSender();
-            this.initModeControls();
-            this.startStatusUpdates();
+        await this.initChartManager();
+        await this.initVisibilityManager();
+        this.initEventListeners();
+        this.initSerialPorts();
+        this.initCurveSelection();
+
+        this.initDataCommunication();
+        this.initModeControls();
+        this.startStatusUpdates();
 
             this.isInitialized = true;
             console.log('FOC电机控制上位机初始化完成');
@@ -50,11 +52,18 @@ class FOCMonitorApp {
             // 使用全局图表管理器
             this.chartManager = new window.ChartManager('main-chart');
             
-            // 初始化默认图表
+            // 初始化默认图表，显示所有重要参数
             this.chartManager.init({
                 type: 'line',
                 data: {
-                    datasets: []
+                    datasets: [
+                        this.createDataset('相电流A (A)', '#FF6384'),
+                        this.createDataset('相电流B (A)', '#36A2EB'),
+                        this.createDataset('相电流C (A)', '#FFCE56'),
+                        this.createDataset('Vq_ref (V)', '#4BC0C0'),
+                        this.createDataset('RPM_ref', '#FF9F40'),
+                        this.createDataset('RPM', '#9966FF')
+                    ]
                 },
                 options: {
                     responsive: true,
@@ -120,24 +129,15 @@ class FOCMonitorApp {
 
     // 初始化事件监听器
     initEventListeners() {
-        // 菜单按钮点击事件
-        document.querySelectorAll('.menu-item').forEach(button => {
-            button.addEventListener('click', (e) => {
-                this.switchPage(e.target.dataset.page);
+        // 可视性控制按钮事件 - 如果按钮存在则绑定
+        const visibilityBtn = document.getElementById('visibility-btn');
+        if (visibilityBtn) {
+            visibilityBtn.addEventListener('click', () => {
+                this.toggleVisibilityPanel();
             });
-        });
+        }
 
-        // 可视性控制按钮事件
-        document.getElementById('visibility-btn').addEventListener('click', () => {
-            this.toggleVisibilityPanel();
-        });
 
-        // 标签页切换事件
-        document.querySelectorAll('.tab-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                this.switchTab(e.target.dataset.tab);
-            });
-        });
 
         // 控制按钮事件
         document.getElementById('pause-btn').addEventListener('click', () => {
@@ -159,10 +159,7 @@ class FOCMonitorApp {
 
 
 
-        // 时间范围选择事件
-        document.getElementById('time-range-select').addEventListener('change', (e) => {
-            this.updateTimeRange(parseInt(e.target.value));
-        });
+
 
         // 串口管理器事件
         this.serialManager.onData((data) => {
@@ -198,10 +195,10 @@ class FOCMonitorApp {
         }
     }
 
-    // 初始化自定义数据发送器
-    initCustomDataSender() {
-        // 使用全局的serialManager实例（来自serial.js）
-        this.customDataSender = new ControlTerminal(window.serialManager);
+    // 初始化数据通信管理器
+    initDataCommunication() {
+        // 使用全局的serialManager实例
+        this.dataCommunication = new DataCommunicationManager(window.serialManager);
     }
 
     // 切换页面
@@ -218,56 +215,7 @@ class FOCMonitorApp {
         console.log('切换到页面:', page);
     }
 
-    // 切换标签页
-    switchTab(tab) {
-        // 移除所有标签页的active类
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // 为当前标签页添加active类
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-        
-        // 更新图表显示的数据集
-        this.updateChartDatasets(tab);
-    }
 
-    // 更新图表数据集
-    updateChartDatasets(tab) {
-        const datasets = [];
-        
-        switch (tab) {
-            case 'current':
-                datasets.push(
-                    this.createDataset('相电流A (A)', '#FF6384'),
-                    this.createDataset('相电流B (A)', '#36A2EB'),
-                    this.createDataset('相电流C (A)', '#FFCE56')
-                );
-                break;
-            case 'voltage':
-                datasets.push(
-                    this.createDataset('Vq_ref (V)', '#FF6384'),
-                    this.createDataset('Vd_ref (V)', '#36A2EB'),
-                    this.createDataset('Vq (V)', '#4BC0C0'),
-                    this.createDataset('Vd (V)', '#FF9F40')
-                );
-                break;
-            case 'speed':
-                datasets.push(
-                    this.createDataset('RPM_ref', '#FF6384'),
-                    this.createDataset('RPM', '#36A2EB')
-                );
-                break;
-            case 'position':
-                datasets.push(
-                    this.createDataset('Position_ref', '#FF6384'),
-                    this.createDataset('Position', '#36A2EB')
-                );
-                break;
-        }
-        
-        this.chartManager.updateDatasets(datasets);
-    }
 
     // 创建数据集配置
     createDataset(label, color) {
@@ -451,37 +399,15 @@ class FOCMonitorApp {
 
     // 更新图表数据
     updateChartData(timestamp, parameters) {
-        const currentTab = document.querySelector('.tab-btn.active').dataset.tab;
-        
-        switch (currentTab) {
-            case 'current':
-                this.chartManager.addData(timestamp, [
-                    parameters.current.ia,
-                    parameters.current.ib,
-                    parameters.current.ic
-                ]);
-                break;
-            case 'voltage':
-                this.chartManager.addData(timestamp, [
-                    parameters.voltage.vq_ref,
-                    parameters.voltage.vd_ref,
-                    parameters.voltage.vq,
-                    parameters.voltage.vd
-                ]);
-                break;
-            case 'speed':
-                this.chartManager.addData(timestamp, [
-                    parameters.speed.rpm_ref,
-                    parameters.speed.rpm
-                ]);
-                break;
-            case 'position':
-                this.chartManager.addData(timestamp, [
-                    parameters.position.position_ref,
-                    parameters.position.position
-                ]);
-                break;
-        }
+        // 显示所有重要参数，不再依赖标签页
+        this.chartManager.addData(timestamp, [
+            parameters.current.ia,
+            parameters.current.ib,
+            parameters.current.ic,
+            parameters.voltage.vq_ref,
+            parameters.speed.rpm_ref,
+            parameters.speed.rpm
+        ]);
     }
 
     // 更新数据速率
@@ -761,10 +687,7 @@ class FOCMonitorApp {
         });
     }
 
-    // 更新时间范围
-    updateTimeRange(seconds) {
-        this.chartManager.setTimeRange(seconds);
-    }
+
 
     // 显示错误消息
     showError(message) {

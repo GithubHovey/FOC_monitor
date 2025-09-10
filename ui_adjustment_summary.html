@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOC电机控制上位机 - UI尺寸调整完成报告</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        .change-item { background: #f8f9fa; padding: 15px; margin: 10px 0; border-left: 4px solid #3498db; border-radius: 5px; }
+        .before { color: #e74c3c; text-decoration: line-through; }
+        .after { color: #27ae60; font-weight: bold; }
+        .file-info { background: #ecf0f1; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; }
+        .status { background: #d5f4e6; color: #27ae60; padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FOC电机控制上位机 - UI尺寸调整完成报告</h1>
+        
+        <div class="status">
+            ✅ UI尺寸调整已完成，应用正在运行中
+        </div>
+
+        <h2>调整内容总结</h2>
+        
+        <div class="change-item">
+            <strong>📊 图表区域缩小</strong><br>
+            <span class="before">min-height: 400px</span> → <span class="after">min-height: 300px, max-height: 350px</span><br>
+            <span class="before">padding: 15px</span> → <span class="after">padding: 12px</span>
+        </div>
+
+        <div class="change-item">
+            <strong>📱 左侧栏收窄</strong><br>
+            <span class="before">width: 250px</span> → <span class="after">width: 200px</span><br>
+            <span class="before">padding: 20px</span> → <span class="after">padding: 15px</span><br>
+            <span class="before">gap: 20px</span> → <span class="after">gap: 15px</span>
+        </div>
+
+        <div class="change-item">
+            <strong>⚙️ 右侧控制面板收窄</strong><br>
+            <span class="before">width: 350px</span> → <span class="after">width: 280px</span><br>
+            <span class="before">padding: 20px</span> → <span class="after">padding: 15px</span><br>
+            <span class="before">gap: 20px</span> → <span class="after">gap: 15px</span>
+        </div>
+
+        <div class="change-item">
+            <strong>🔤 串口配置字体减小</strong><br>
+            <span class="before">font-size: 16px</span> → <span class="after">font-size: 13px</span> (标题)<br>
+            <span class="before">font-size: 14px</span> → <span class="after">font-size: 12px</span> (选择框)<br>
+            <span class="before">font-size: 14px</span> → <span class="after">font-size: 12px</span> (按钮)
+        </div>
+
+        <div class="change-item">
+            <strong>📡 数据通信区域字体减小</strong><br>
+            <span class="before">font-size: 16px</span> → <span class="after">font-size: 13px</span> (标题)<br>
+            <span class="before">font-size: 12px</span> → <span class="after">font-size: 11px</span> (文本框)<br>
+            <span class="before">padding: 10px</span> → <span class="after">padding: 8px</span><br>
+            <span class="before">height: 120px</span> → <span class="after">height: 100px</span>
+        </div>
+
+        <div class="change-item">
+            <strong>📊 曲线选择字体减小</strong><br>
+            <span class="before">font-size: 14px</span> → <span class="after">font-size: 12px</span> (标签)
+        </div>
+
+        <h2>修改文件</h2>
+        <div class="file-info">src/frontend/styles/main.css</div>
+
+        <h2>当前界面布局</h2>
+        <ul>
+            <li><strong>顶部标题栏</strong> - 保持不变</li>
+            <li><strong>三栏主体布局</strong>：
+                <ul>
+                    <li>左侧栏：200px宽（原250px）</li>
+                    <li>中间图表：高度缩小至300-350px（原400px+）</li>
+                    <li>右侧控制面板：280px宽（原350px）</li>
+                </ul>
+            </li>
+            <li><strong>数据通信区域</strong>：
+                <ul>
+                    <li>输入/输出栏高度减小</li>
+                    <li>字体大小统一减小</li>
+                    <li>间距和内边距压缩</li>
+                </ul>
+            </li>
+            <li><strong>底部状态栏</strong> - 保持不变</li>
+        </ul>
+
+        <div class="status">
+            🎯 修改目标已达成：输入栏和输出栏显示区域已增大，图表已缩小，左侧栏已收窄，串口配置字体已减小
+        </div>
+    </div>
+</body>
+</html>

@@ -14,13 +14,6 @@
             <div class="logo">
                 <h1>FOC电机控制上位机</h1>
             </div>
-            <nav class="menu">
-                <button class="menu-item" data-page="monitor">实时监控</button>
-                <button class="menu-item" data-page="control">控制设置</button>
-                <button class="menu-item" data-page="config">参数配置</button>
-                <button class="menu-item" data-page="history">历史数据</button>
-                <button id="visibility-btn" class="menu-item visibility-btn">可视性控制</button>
-            </nav>
             <div class="status-bar">
                 <span id="connection-status" class="status-offline">未连接</span>
                 <span id="data-rate">0 Hz</span>
@@ -60,53 +53,57 @@
 
             <!-- 中部图表区域 -->
             <section class="chart-area">
-                <div class="chart-tabs">
-                    <button class="tab-btn active" data-tab="current">电流参数</button>
-                    <button class="tab-btn" data-tab="voltage">电压参数</button>
-                    <button class="tab-btn" data-tab="speed">转速参数</button>
-                    <button class="tab-btn" data-tab="position">位置参数</button>
-                </div>
-                
                 <div class="chart-container">
                     <canvas id="main-chart" width="800" height="400"></canvas>
                 </div>
                 
                 <div class="chart-controls">
-                    <button id="pause-btn" class="control-btn">暂停</button>
-                    <button id="clear-btn" class="control-btn">清除</button>
-                    <button id="export-btn" class="control-btn">导出数据</button>
-                    <div class="time-range">
-                        <label>时间范围：</label>
-                        <select id="time-range-select">
-                            <option value="10">10秒</option>
-                            <option value="30" selected>30秒</option>
-                            <option value="60">60秒</option>
-                            <option value="300">5分钟</option>
-                        </select>
+                    <button id="pause-btn" class="control-btn" title="暂停/继续">
+                        <span class="icon">⏸️</span>
+                        <span class="text">暂停</span>
+                    </button>
+                    <button id="clear-btn" class="control-btn" title="清除数据">
+                        <span class="icon">🗑️</span>
+                        <span class="text">清除</span>
+                    </button>
+                    <button id="export-btn" class="control-btn" title="导出数据">
+                        <span class="icon">📥</span>
+                        <span class="text">导出</span>
+                    </button>
+                </div>
+                
+                <!-- 数据通信区域 -->
+                <div class="data-communication">
+                    <div class="comm-section">
+                        <h4>自定义写入数据</h4>
+                        <div class="hex-display-area">
+                            <textarea id="send-data-display" readonly placeholder="上位机发送的数据将在此显示（十六进制）..."></textarea>
+                        </div>
+                        <div class="send-controls">
+                            <input type="text" id="hex-input" placeholder="输入十六进制数据（如：01 02 03）" maxlength="200">
+                            <button id="send-hex-btn" class="control-btn">发送</button>
+                            <button id="clear-send-btn" class="control-btn">清空</button>
+                        </div>
+                    </div>
+                    
+                    <div class="comm-section">
+                        <h4>读取数据</h4>
+                        <div class="hex-display-area">
+                            <textarea id="receive-data-display" readonly placeholder="上位机接收的数据将在此显示（十六进制）..."></textarea>
+                        </div>
+                        <div class="receive-controls">
+                            <button id="clear-receive-btn" class="control-btn">清空</button>
+                            <button id="save-receive-btn" class="control-btn">保存</button>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- 右侧数据发送面板 -->
             <aside class="data-sender-panel">
-                <!-- 1. 控制终端 -->
-                <div class="control-terminal">
-                    <h3>控制终端</h3>
-                    <div class="sender-controls">
-                        <select id="data-format-select">
-                            <option value="hex">十六进制</option>
-                            <option value="ascii">ASCII</option>
-                            <option value="utf8">UTF-8</option>
-                            <option value="decimal">十进制</option>
-                            <option value="binary">二进制</option>
-                        </select>
-                        <textarea id="custom-data-input" placeholder="输入要发送的数据..."></textarea>
-                        <button id="send-data-btn" class="send-btn">发送数据</button>
-                        <button id="clear-data-btn" class="clear-btn">清除</button>
-                    </div>
-                </div>
+                <!-- 1. 模式设置 -->
 
-                <!-- 2. 模式设置 -->
+                <!-- 1. 模式设置 -->
                 <div class="mode-controls">
                     <h3>模式设置</h3>
                     
@@ -176,7 +173,8 @@
     <script src="../utils/chartManager.js"></script>
     <script src="../components/visibilityManager.js"></script>
     <script src="../components/visibilityPanel.js"></script>
-    <script type="module" src="../components/controlTerminal.js"></script>
+    
+    <script type="module" src="../utils/dataCommunication.js"></script>
     <script type="module" src="main.js"></script>
 </body>
 </html>

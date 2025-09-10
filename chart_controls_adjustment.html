@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOC电机控制上位机 - 图表控制按钮调整完成报告</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        .change-item { background: #f8f9fa; padding: 15px; margin: 10px 0; border-left: 4px solid #3498db; border-radius: 5px; }
+        .before { color: #e74c3c; text-decoration: line-through; }
+        .after { color: #27ae60; font-weight: bold; }
+        .file-info { background: #ecf0f1; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; }
+        .status { background: #d5f4e6; color: #27ae60; padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; }
+        .button-demo { display: flex; gap: 10px; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+        .demo-btn { padding: 6px 10px; border: none; background: #95a5a6; color: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 11px; }
+        .demo-icon { font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FOC电机控制上位机 - 图表控制按钮调整完成报告</h1>
+        
+        <div class="status">
+            ✅ 图表控制按钮调整已完成，应用正在运行中
+        </div>
+
+        <h2>调整内容总结</h2>
+        
+        <div class="change-item">
+            <strong>🎯 时间范围选择器已移除</strong><br>
+            <span class="before">时间范围选择下拉框（10秒/30秒/60秒/5分钟）</span> → <span class="after">完全移除</span><br>
+            图表将使用默认时间范围，无需用户手动设置
+        </div>
+
+        <div class="change-item">
+            <strong>🎨 控制按钮样式优化</strong><br>
+            <span class="before">纯文字按钮："暂停"、"清除"、"导出数据"</span><br>
+            <span class="after">图标+文字组合按钮，更直观美观</span>
+        </div>
+
+        <div class="change-item">
+            <strong>📏 按钮尺寸减小</strong><br>
+            <span class="before">padding: 8px 16px, font-size: 14px</span><br>
+            <span class="after">padding: 6px 10px, font-size: 11px</span><br>
+            按钮高度和宽度显著减小，为图表区域腾出更多空间
+        </div>
+
+        <div class="change-item">
+            <strong>🎯 新增图标支持</strong><br>
+            ⏸️ 暂停/继续图标<br>
+            🗑️ 清除图标<br>
+            📥 导出图标
+        </div>
+
+        <h2>按钮样式演示</h2>
+        <div class="button-demo">
+            <button class="demo-btn">
+                <span class="demo-icon">⏸️</span>
+                <span>暂停</span>
+            </button>
+            <button class="demo-btn">
+                <span class="demo-icon">🗑️</span>
+                <span>清除</span>
+            </button>
+            <button class="demo-btn">
+                <span class="demo-icon">📥</span>
+                <span>导出</span>
+            </button>
+        </div>
+
+        <h2>修改文件</h2>
+        <div class="file-info">src/frontend/pages/index.html - 移除时间范围选择器，优化按钮HTML结构</div>
+        <div class="file-info">src/frontend/styles/main.css - 减小按钮尺寸，添加图标样式</div>
+        <div class="file-info">src/frontend/pages/main.js - 移除时间范围相关的事件监听和方法</div>
+
+        <h2>最终效果</h2>
+        <ul>
+            <li>✅ 图表控制区域高度显著减小</li>
+            <li>✅ 按钮更加紧凑美观</li>
+            <li>✅ 图标+文字组合更直观</li>
+            <li>✅ 为图表显示区域腾出更多空间</li>
+            <li>✅ 移除了不再需要的时间范围选择功能</li>
+        </ul>
+
+        <div class="status">
+            🎯 修改目标已达成：图表控制按钮已优化，占用空间更小，界面更简洁
+        </div>
+    </div>
+</body>
+</html>

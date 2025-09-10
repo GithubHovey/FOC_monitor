@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据通信功能测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        body {
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>数据通信功能测试</h1>
+        
+        <div class="test-section">
+            <h2>功能验证</h2>
+            <p>✅ 顶部菜单栏已删除"实时监控"、"控制设置"等按钮</p>
+            <p>✅ 图表下方添加了数据通信区域</p>
+            <p>✅ 左侧：自定义写入数据区域（十六进制显示）</p>
+            <p>✅ 右侧：读取数据区域（十六进制显示）</p>
+        </div>
+
+        <div class="test-section">
+            <h2>十六进制数据测试</h2>
+            <div class="data-communication">
+                <div class="comm-section">
+                    <h4>自定义写入数据</h4>
+                    <div class="hex-display-area">
+                        <textarea id="test-send-display" readonly placeholder="测试：发送数据将在此显示...">[14:30:45] 01 02 03 04 05
+[14:30:46] AA BB CC DD EE FF</textarea>
+                    </div>
+                    <div class="send-controls">
+                        <input type="text" id="test-hex-input" placeholder="输入十六进制数据" value="01 02 03 04">
+                        <button class="control-btn" onclick="testSend()">测试发送</button>
+                        <button class="control-btn" onclick="clearTestSend()">清空</button>
+                    </div>
+                </div>
+                
+                <div class="comm-section">
+                    <h4>读取数据</h4>
+                    <div class="hex-display-area">
+                        <textarea id="test-receive-display" readonly placeholder="测试：接收数据将在此显示...">[14:30:47] 11 22 33 44 55
+[14:30:48] 66 77 88 99 AA BB CC DD</textarea>
+                    </div>
+                    <div class="receive-controls">
+                        <button class="control-btn" onclick="clearTestReceive()">清空</button>
+                        <button class="control-btn" onclick="saveTestReceive()">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>使用说明</h2>
+            <ol>
+                <li><strong>发送数据：</strong>在左侧输入框输入十六进制数据（如：01 02 03），点击"发送"按钮</li>
+                <li><strong>查看历史：</strong>发送和接收的数据都会带有时间戳显示</li>
+                <li><strong>清空记录：</strong>点击对应的"清空"按钮可以清除历史记录</li>
+                <li><strong>保存数据：</strong>点击"保存"按钮可以将接收的数据保存为文本文件</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function testSend() {
+            const input = document.getElementById('test-hex-input');
+            const display = document.getElementById('test-send-display');
+            const time = new Date().toLocaleTimeString();
+            
+            if (input.value.trim()) {
+                const newLine = `[${time}] ${input.value.trim()}`;
+                display.value = display.value ? display.value + '\n' + newLine : newLine;
+                display.scrollTop = display.scrollHeight;
+                input.value = '';
+            }
+        }
+
+        function clearTestSend() {
+            document.getElementById('test-send-display').value = '';
+        }
+
+        function clearTestReceive() {
+            document.getElementById('test-receive-display').value = '';
+        }
+
+        function saveTestReceive() {
+            const content = document.getElementById('test-receive-display').value;
+            if (content) {
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'received_data_test.txt';
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+    </script>
+</body>
+</html>
