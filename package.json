@@ -10,7 +10,9 @@
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux",
     "build:mac": "electron-builder --mac",
-    "pack": "electron-builder --dir"
+    "pack": "electron-builder --dir",
+    "clean": "powershell -Command \"Remove-Item -Recurse -Force dist, build, *.log -ErrorAction SilentlyContinue\"",
+    "clean:all": "npm run clean && rmdir /s /q node_modules 2>nul"
   },
   "keywords": [
     "foc",
