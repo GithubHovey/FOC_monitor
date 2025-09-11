@@ -29,12 +29,14 @@ class FOCMonitorApp {
             // 初始化各个模块
         await this.initChartManager();
         await this.initVisibilityManager();
+// 初始化事件监听器
         this.initEventListeners();
         this.initSerialPorts();
         this.initCurveSelection();
 
         this.initDataCommunication();
         this.initModeControls();
+        this.initRWDataControls();
         this.startStatusUpdates();
 
             this.isInitialized = true;
@@ -156,10 +158,6 @@ class FOCMonitorApp {
         document.getElementById('connect-btn').addEventListener('click', () => {
             this.toggleSerialConnection();
         });
-
-
-
-
 
         // 串口管理器事件
         this.serialManager.onData((data) => {
@@ -299,6 +297,15 @@ class FOCMonitorApp {
         
         // 更新数据速率显示
         this.updateDataRate();
+        
+        // 将所有接收到的数据以16进制形式显示在读写栏中
+        if (data.raw) {
+            // 显示原始16进制数据
+            this.displayReceivedHex(data.raw);
+        } else if (data.data) {
+            // 显示数据部分
+            this.displayReceivedHex(data.data);
+        }
         
         if (data.type === 'foc_data') {
             // 处理FOC协议数据
@@ -471,6 +478,8 @@ class FOCMonitorApp {
         URL.revokeObjectURL(url);
     }
 
+
+
     // 转换为CSV格式
     convertToCSV(data) {
         const headers = ['时间戳', ...data.datasets.map(ds => ds.label)];
@@ -487,6 +496,56 @@ class FOCMonitorApp {
         }
         
         return csv;
+    }
+
+    // 显示接收到的16进制数据
+    displayReceivedHex(data) {
+        const receiveDataDisplay = document.getElementById('receive-data-display');
+        if (!receiveDataDisplay) return;
+
+        const timestamp = new Date().toLocaleTimeString();
+        const bytes = Array.from(new Uint8Array(data));
+        const hexDisplay = bytes.map(byte => 
+            byte.toString(16).padStart(2, '0').toUpperCase()
+        ).join(' ');
+
+        // 添加到现有内容的末尾
+        const currentText = receiveDataDisplay.value;
+        const newLine = `[${timestamp}] ${hexDisplay}`;
+        
+        if (currentText) {
+            receiveDataDisplay.value = currentText + '\n' + newLine;
+        } else {
+            receiveDataDisplay.value = newLine;
+        }
+
+        // 自动滚动到底部
+        receiveDataDisplay.scrollTop = receiveDataDisplay.scrollHeight;
+    }
+
+    // 显示发送的16进制数据
+    displaySentHex(data) {
+        const sendDataDisplay = document.getElementById('send-data-display');
+        if (!sendDataDisplay) return;
+
+        const timestamp = new Date().toLocaleTimeString();
+        const bytes = Array.from(new Uint8Array(data));
+        const hexDisplay = bytes.map(byte => 
+            byte.toString(16).padStart(2, '0').toUpperCase()
+        ).join(' ');
+
+        // 添加到现有内容的末尾
+        const currentText = sendDataDisplay.value;
+        const newLine = `[${timestamp}] ${hexDisplay}`;
+        
+        if (currentText) {
+            sendDataDisplay.value = currentText + '\n' + newLine;
+        } else {
+            sendDataDisplay.value = newLine;
+        }
+
+        // 自动滚动到底部
+        sendDataDisplay.scrollTop = sendDataDisplay.scrollHeight;
     }
 
     // 初始化曲线选择控件
@@ -532,8 +591,13 @@ class FOCMonitorApp {
     initModeControls() {
         // 模式选择器事件
         const modeSelector = document.getElementById('control-mode-select');
-        modeSelector.addEventListener('change', (e) => {
-            this.updateModeControls(e.target.value);
+        const switchModeBtn = document.getElementById('switch-mode-btn');
+        
+        // 切换按钮事件
+        switchModeBtn.addEventListener('click', () => {
+            const selectedMode = modeSelector.value;
+            this.updateModeControls(selectedMode);
+            this.showSuccess(`已切换到${this.getModeDisplayName(selectedMode)}`);
         });
 
         // 初始化默认模式
@@ -547,6 +611,267 @@ class FOCMonitorApp {
         calibrateBtn.addEventListener('click', () => {
             this.sendCalibrationCommand();
         });
+
+        // 状态上报启用/禁用事件
+        const statusEnableBtn = document.getElementById('send-status-enable-btn');
+        const statusDisableBtn = document.getElementById('send-status-disable-btn');
+        statusEnableBtn.addEventListener('click', () => {
+            this.sendStatusEnableCommand();
+        });
+        statusDisableBtn.addEventListener('click', () => {
+            this.sendStatusDisableCommand();
+        });
+    }
+
+    // 初始化读写数据控制
+    initRWDataControls() {
+        const rwModeRadios = document.querySelectorAll('input[name="rw-mode"]');
+        const dataIdSelect = document.getElementById('data-id-select');
+        const dataValueInput = document.getElementById('data-value-input');
+        const dataValueDisplay = document.getElementById('data-value-display');
+        const executeBtn = document.getElementById('execute-rw-btn');
+        const clearBtn = document.getElementById('clear-rw-btn');
+
+        // 数据ID到类型的映射
+        const dataTypeMap = {
+            '0x10': 'float', '0x11': 'float', '0x12': 'float', '0x13': 'float',
+            '0x14': 'float', '0x15': 'float', '0x16': 'float', '0x17': 'float',
+            '0x18': 'float', '0x19': 'float', '0x1A': 'float', '0x1B': 'float',
+            '0x1C': 'float', '0x1D': 'float', '0x1E': 'uint32', '0x1F': 'float',
+            '0x20': 'float', '0x21': 'float', '0x22': 'float', '0x23': 'uint32',
+            '0x24': 'uint32', '0x25': 'uint32', '0x26': 'float', '0x27': 'float',
+            '0x28': 'float', '0x29': 'float', '0x2A': 'float', '0x2B': 'float',
+            '0x2C': 'float', '0x2D': 'float', '0x2E': 'float', '0x30': 'uint32',
+            '0x31': 'float'
+        };
+
+        // 更新数据类型显示
+        const updateDataType = () => {
+            const dataId = dataIdSelect.value;
+            const dataType = dataTypeMap[dataId] || 'float';
+            document.getElementById('data-type-label').textContent = dataType;
+        };
+
+        // 更新读写模式UI
+        const updateRWMode = () => {
+            const mode = document.querySelector('input[name="rw-mode"]:checked').value;
+            const dataValueInput = document.getElementById('data-value-input');
+            const dataValueDisplay = document.getElementById('data-value-display');
+            const dataValueLabel = document.getElementById('data-value-label');
+            const executeBtn = document.getElementById('execute-rw-btn');
+
+            if (mode === 'read') {
+                dataValueInput.style.display = 'none';
+                dataValueDisplay.style.display = 'block';
+                dataValueLabel.textContent = '读取值:';
+                executeBtn.textContent = '读取数据';
+            } else {
+                dataValueInput.style.display = 'block';
+                dataValueDisplay.style.display = 'none';
+                dataValueLabel.textContent = '写入值:';
+                executeBtn.textContent = '写入数据';
+            }
+        };
+
+        // 绑定事件监听器
+        rwModeRadios.forEach(radio => {
+            radio.addEventListener('change', updateRWMode);
+        });
+
+        dataIdSelect.addEventListener('change', updateDataType);
+
+        executeBtn.addEventListener('click', () => {
+            this.executeRWCommand();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            this.clearRWData();
+        });
+
+        // 初始化
+        updateDataType();
+        updateRWMode();
+    }
+
+    // 执行读写命令
+    async executeRWCommand() {
+        const mode = document.querySelector('input[name="rw-mode"]:checked').value;
+        const dataId = document.getElementById('data-id-select').value;
+        const dataValueInput = document.getElementById('data-value-input');
+        const resultDisplay = document.getElementById('rw-result-display');
+
+        try {
+            const idHex = parseInt(dataId, 16);
+            
+            if (mode === 'read') {
+                await this.sendReadCommand(idHex, resultDisplay);
+            } else {
+                const value = parseFloat(dataValueInput.value);
+                if (isNaN(value)) {
+                    throw new Error('请输入有效的数值');
+                }
+                await this.sendWriteCommand(idHex, value, resultDisplay);
+            }
+        } catch (error) {
+            this.showRWResult(resultDisplay, `错误: ${error.message}`, 'error');
+        }
+    }
+
+    // 发送读取命令
+    async sendReadCommand(dataId, resultDisplay) {
+        if (!this.serialManager.isConnected()) {
+            throw new Error('请先连接串口');
+        }
+
+        // 构建读取命令包：AA 02 [数据ID高字节] [数据ID低字节] 00 00 00 00 00 00 00 [CHK] 55
+        const command = 0x02; // 读数据命令
+        const packet = new Uint8Array(14);
+        packet[0] = 0xAA; // 包头
+        packet[1] = command; // 命令
+        packet[2] = (dataId >> 8) & 0xFF; // 数据ID高字节
+        packet[3] = dataId & 0xFF; // 数据ID低字节
+        
+        // 其余数据区填充0
+        for (let i = 4; i < 12; i++) {
+            packet[i] = 0;
+        }
+        
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 0; i < 12; i++) {
+            checksum += packet[i];
+        }
+        packet[12] = checksum & 0xFF; // 校验和
+        packet[13] = 0x55; // 包尾
+
+        // 发送数据并显示16进制
+        await this.serialManager.sendData(packet);
+        this.displaySentHex(packet);
+        this.showRWResult(resultDisplay, '读取命令已发送，等待响应...', 'success');
+
+        // 设置响应处理 - 使用临时监听器
+        const readHandler = (data) => {
+            const dataArray = new Uint8Array(data);
+            if (dataArray.length >= 14 && dataArray[1] === 0x02) {
+                this.handleReadResponse(dataArray, resultDisplay);
+                // 移除监听器
+                const index = this.serialManager.dataCallbacks.indexOf(readHandler);
+                if (index > -1) {
+                    this.serialManager.dataCallbacks.splice(index, 1);
+                }
+            }
+        };
+        
+        this.serialManager.onData(readHandler);
+        
+        // 设置超时，5秒后自动移除监听器
+        setTimeout(() => {
+            const index = this.serialManager.dataCallbacks.indexOf(readHandler);
+            if (index > -1) {
+                this.serialManager.dataCallbacks.splice(index, 1);
+                this.showRWResult(resultDisplay, '读取超时，未收到响应', 'error');
+            }
+        }, 5000);
+    }
+
+    // 发送写入命令
+    async sendWriteCommand(dataId, value, resultDisplay) {
+        if (!this.serialManager.isConnected()) {
+            throw new Error('请先连接串口');
+        }
+
+        // 构建写入命令包：AA 01 [数据ID高字节] [数据ID低字节] [数据4字节] 00 00 00 00 [CHK] 55
+        const command = 0x01; // 写数据命令
+        const packet = new Uint8Array(14);
+        packet[0] = 0xAA; // 包头
+        packet[1] = command; // 命令
+        packet[2] = (dataId >> 8) & 0xFF; // 数据ID高字节
+        packet[3] = dataId & 0xFF; // 数据ID低字节
+
+        // 将float值转换为4字节小端格式
+        const floatBytes = new Float32Array([value]);
+        const bytes = new Uint8Array(floatBytes.buffer);
+        packet[4] = bytes[0];
+        packet[5] = bytes[1];
+        packet[6] = bytes[2];
+        packet[7] = bytes[3];
+
+        // 其余数据区填充0
+        for (let i = 8; i < 12; i++) {
+            packet[i] = 0;
+        }
+
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 0; i < 12; i++) {
+            checksum += packet[i];
+        }
+        packet[12] = checksum & 0xFF; // 校验和
+        packet[13] = 0x55; // 包尾
+
+        // 发送命令并显示16进制
+        await this.serialManager.sendData(packet);
+        this.displaySentHex(packet);
+        this.showRWResult(resultDisplay, `写入命令已发送，值: ${value}`, 'success');
+
+        // 设置响应处理 - 使用临时监听器
+        const writeHandler = (data) => {
+            const dataArray = new Uint8Array(data);
+            if (dataArray.length >= 14 && dataArray[1] === 0x01) {
+                this.handleWriteResponse(dataArray, resultDisplay);
+                // 移除监听器
+                const index = this.serialManager.dataCallbacks.indexOf(writeHandler);
+                if (index > -1) {
+                    this.serialManager.dataCallbacks.splice(index, 1);
+                }
+            }
+        };
+        
+        this.serialManager.onData(writeHandler);
+        
+        // 设置超时，5秒后自动移除监听器
+        setTimeout(() => {
+            const index = this.serialManager.dataCallbacks.indexOf(writeHandler);
+            if (index > -1) {
+                this.serialManager.dataCallbacks.splice(index, 1);
+                this.showRWResult(resultDisplay, '写入超时，未收到响应', 'error');
+            }
+        }, 5000);
+    }
+
+    // 处理读取响应
+    handleReadResponse(data, resultDisplay) {
+        if (data.length >= 14) {
+            const command = data[1];
+            if (command === 0x02) { // 读数据响应
+                const dataId = (data[2] << 8) | data[3]; // 高字节在前
+                const value = new Float32Array(data.slice(4, 8).buffer)[0];
+                
+                document.getElementById('data-value-display').textContent = value.toFixed(4);
+            }
+        }
+    }
+
+    // 处理写入响应
+    handleWriteResponse(data, resultDisplay) {
+        if (data.length >= 14) {
+            const command = data[1];
+            if (command === 0x01) { // 写数据响应
+                const dataId = (data[2] << 8) | data[3]; // 高字节在前
+            }
+        }
+    }
+
+    // 清空读写数据
+    clearRWData() {
+        document.getElementById('data-value-input').value = '';
+        document.getElementById('data-value-display').textContent = '';
+    }
+
+    // 显示读写结果
+    showRWResult(displayElement, message, type = 'info') {
+        displayElement.textContent = message;
+        displayElement.className = `result-display ${type}`;
     }
 
     // 更新模式控制界面
@@ -631,8 +956,9 @@ class FOCMonitorApp {
                 break;
         }
 
-        // 发送数据
+        // 发送数据并显示16进制
         this.serialManager.sendData(data).then(() => {
+            this.displaySentHex(data);
             console.log(`发送${controlId}命令成功，值: ${value}`);
         }).catch(error => {
             this.showError(`发送命令失败: ${error.message}`);
@@ -646,16 +972,98 @@ class FOCMonitorApp {
             return;
         }
 
-        // 创建14字节校准数据包（全0x55，后续可替换为实际协议）
+        // 创建14字节数据包
         const data = new Uint8Array(14);
-        data.fill(0x55);
-        data[0] = 0x04; // 校准模式命令
+        data[0] = 0xAA; // 包头
+        data[1] = 0x05; // 命令类型：校准模式
+        data[2] = 0x01; // 校准开始
+        data[12] = 0x55; // 包尾
+        data[13] = 0x55;
 
-        // 发送数据
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 1; i < 12; i++) {
+            checksum += data[i];
+        }
+        data[11] = checksum & 0xFF;
+
         this.serialManager.sendData(data).then(() => {
-            this.showSuccess('校准命令发送成功');
+            this.displaySentHex(data);
+            console.log('校准命令发送成功');
         }).catch(error => {
             this.showError(`发送校准命令失败: ${error.message}`);
+        });
+    }
+
+    // 发送状态上报启用命令
+    sendStatusEnableCommand() {
+        if (!this.serialManager || !this.serialManager.isConnected()) {
+            this.showError('串口未连接，无法发送命令');
+            return;
+        }
+
+        // 创建14字节数据包
+        const data = new Uint8Array(14);
+        data[0] = 0xAA; // 包头
+        data[1] = 0x06; // 命令类型：状态上报配置
+        data[2] = 0x01; // 启用状态上报
+        data[12] = 0x55; // 包尾
+        data[13] = 0x55;
+
+        // 其余字节填充0
+        for (let i = 3; i < 12; i++) {
+            data[i] = 0;
+        }
+
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 1; i < 12; i++) {
+            checksum += data[i];
+        }
+        data[11] = checksum & 0xFF;
+
+        this.serialManager.sendData(data).then(() => {
+            this.displaySentHex(data);
+            console.log('状态上报已启用');
+            this.showSuccess('状态上报已启用');
+        }).catch(error => {
+            this.showError(`状态上报启用失败: ${error.message}`);
+        });
+    }
+
+    // 发送状态上报禁用命令
+    sendStatusDisableCommand() {
+        if (!this.serialManager || !this.serialManager.isConnected()) {
+            this.showError('串口未连接，无法发送命令');
+            return;
+        }
+
+        // 创建14字节数据包
+        const data = new Uint8Array(14);
+        data[0] = 0xAA; // 包头
+        data[1] = 0x06; // 命令类型：状态上报配置
+        data[2] = 0x00; // 禁用状态上报
+        data[12] = 0x55; // 包尾
+        data[13] = 0x55;
+
+        // 其余字节填充0
+        for (let i = 3; i < 12; i++) {
+            data[i] = 0;
+        }
+
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 1; i < 12; i++) {
+            checksum += data[i];
+        }
+        data[11] = checksum & 0xFF;
+
+        this.serialManager.sendData(data).then(() => {
+            this.displaySentHex(data);
+            console.log('状态上报已禁用');
+            this.showSuccess('状态上报已禁用');
+        }).catch(error => {
+            this.showError(`状态上报禁用失败: ${error.message}`);
         });
     }
     
@@ -666,6 +1074,18 @@ class FOCMonitorApp {
         }
     }
     
+    // 获取模式显示名称
+    getModeDisplayName(mode) {
+        const modeNames = {
+            'torque': '力矩模式',
+            'speed': '速度模式',
+            'position': '位置模式',
+            'calibration': '校准模式',
+            'status': '状态上报模式'
+        };
+        return modeNames[mode] || '未知模式';
+    }
+
     // 切换控制模式
     switchControlMode(mode) {
         let command;
