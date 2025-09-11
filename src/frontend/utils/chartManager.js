@@ -37,14 +37,26 @@ class ChartManager {
                             text: '时间 (秒)'
                         },
                         min: 0,
-                        max: this.timeRange
+                        max: this.timeRange,
+                        grid: {
+                            color: '#484f58'
+                        },
+                        ticks: {
+                            color: '#8b949e'
+                        }
                     },
                     y: {
                         title: {
                             display: true,
                             text: '数值'
                         },
-                        beginAtZero: false
+                        beginAtZero: false,
+                        grid: {
+                            color: '#484f58'
+                        },
+                        ticks: {
+                            color: '#8b949e'
+                        }
                     }
                 },
                 plugins: {
