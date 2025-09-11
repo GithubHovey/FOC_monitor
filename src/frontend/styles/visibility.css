@@ -166,48 +166,59 @@
 }
 
 .btn {
-    padding: 8px 16px;
-    border: 1px solid transparent;
-    border-radius: 4px;
+    padding: 10px 18px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 6px;
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
-    min-width: 60px;
+    transition: all 0.3s ease;
+    min-width: 70px;
     text-align: center;
+    background: rgba(0, 255, 255, 0.1);
+    color: #00ffff;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 255, 255, 0.2);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 255, 255, 0.4);
+    background: rgba(0, 255, 255, 0.2);
 }
 
 .btn-primary {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
+    background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
+    color: #000;
+    border: none;
+    font-weight: 600;
 }
 
 .btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
+    background: linear-gradient(135deg, #00ffff 0%, #00aaff 100%);
+    box-shadow: 0 4px 16px rgba(0, 255, 255, 0.5);
 }
 
 .btn-secondary {
-    background-color: #6c757d;
-    color: white;
-    border-color: #6c757d;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-secondary:hover {
-    background-color: #545b62;
-    border-color: #545b62;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
 }
 
 .btn-outline {
-    background-color: transparent;
-    color: #6c757d;
-    border-color: #6c757d;
+    background: transparent;
+    color: #00ffff;
+    border: 1px solid rgba(0, 255, 255, 0.4);
 }
 
 .btn-outline:hover {
-    background-color: #6c757d;
-    color: white;
+    background: rgba(0, 255, 255, 0.1);
+    color: #00ffff;
 }
 
 /* 响应式设计 */

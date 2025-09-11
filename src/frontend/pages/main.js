@@ -589,12 +589,16 @@ class FOCMonitorApp {
 
     // 初始化模式控制功能
     initModeControls() {
-        // 模式选择器事件
+        // 模式选择器事件 - 选择后立即切换
         const modeSelector = document.getElementById('control-mode-select');
-        const switchModeBtn = document.getElementById('switch-mode-btn');
         
-        // 切换按钮事件
-        switchModeBtn.addEventListener('click', () => {
+        if (!modeSelector) {
+            console.error('模式选择器未找到');
+            return;
+        }
+
+        // 选择器变化时立即切换
+        modeSelector.addEventListener('change', () => {
             const selectedMode = modeSelector.value;
             this.updateModeControls(selectedMode);
             this.showSuccess(`已切换到${this.getModeDisplayName(selectedMode)}`);
@@ -603,24 +607,19 @@ class FOCMonitorApp {
         // 初始化默认模式
         this.updateModeControls('torque');
 
-        // 进度条事件
+        // 进度条事件 - 所有模式都支持实时发送
         this.initSliderEvents();
 
-        // 校准按钮事件
+        // 校准模式 - 直接发送
         const calibrateBtn = document.getElementById('send-calibration-btn');
-        calibrateBtn.addEventListener('click', () => {
-            this.sendCalibrationCommand();
-        });
+        if (calibrateBtn) {
+            calibrateBtn.addEventListener('click', () => {
+                this.sendCalibrationCommand();
+            });
+        }
 
-        // 状态上报启用/禁用事件
-        const statusEnableBtn = document.getElementById('send-status-enable-btn');
-        const statusDisableBtn = document.getElementById('send-status-disable-btn');
-        statusEnableBtn.addEventListener('click', () => {
-            this.sendStatusEnableCommand();
-        });
-        statusDisableBtn.addEventListener('click', () => {
-            this.sendStatusDisableCommand();
-        });
+        // 状态上报模式 - 切换到该模式时自动启用状态上报
+        // 无需按钮，状态上报将在切换到该模式时自动处理
     }
 
     // 初始化读写数据控制
@@ -890,6 +889,11 @@ class FOCMonitorApp {
 
         // 更新当前模式
         this.currentMode = selectedMode;
+
+        // 状态上报模式特殊处理
+        if (selectedMode === 'status') {
+            this.sendStatusEnableCommand();
+        }
     }
 
     // 初始化进度条事件
@@ -905,17 +909,14 @@ class FOCMonitorApp {
                 valueDisplay.textContent = slider.value;
             }
 
-            // 值变化事件
+            // 值变化事件（实时发送）
             slider.addEventListener('input', (e) => {
                 const valueDisplayId = e.target.id.replace('-slider', '-value');
                 const valueDisplay = document.getElementById(valueDisplayId);
                 if (valueDisplay) {
                     valueDisplay.textContent = e.target.value;
                 }
-            });
-
-            // 值改变事件（发送命令）
-            slider.addEventListener('change', (e) => {
+                // 实时发送数据
                 this.sendModeCommand(e.target.id, parseFloat(e.target.value));
             });
         });

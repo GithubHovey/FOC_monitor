@@ -105,61 +105,59 @@
             <aside class="control-panel">
                 <!-- 模式设置功能栏 -->
                 <div class="mode-section">
-                    <h3>模式设置</h3>
+                    <h3>当前模式</h3>
                     
                     <!-- 模式选择 -->
                     <div class="mode-selector">
                         <select id="control-mode-select">
-                            <option value="torque">力矩</option>
-                            <option value="speed">速度</option>
-                            <option value="position">位置</option>
-                            <option value="calibration">校准</option>
-                            <option value="status">状态</option>
+                            <option value="torque">力矩模式</option>
+                            <option value="speed">速度模式</option>
+                            <option value="position">位置模式</option>
+                            <option value="calibration">校准模式</option>
+                            <option value="status">状态上报模式</option>
                         </select>
-                        <button id="switch-mode-btn" class="control-btn">切换</button>
                     </div>
 
                     <!-- 力矩模式控制 -->
-                    <div class="mode-control torque-mode" style="display: none;">
+                    <div class="mode-control torque-mode">
                         <h4>力矩控制</h4>
                         <div class="slider-control">
                             <label>力矩值: <span id="torque-value">0</span>%</label>
                             <input type="range" id="torque-slider" min="0" max="100" value="0" step="1">
                         </div>
-                        <button id="send-torque-btn" class="send-btn">发送力矩指令</button>
                     </div>
 
                     <!-- 速度模式控制 -->
-                    <div class="mode-control speed-mode" style="display: none;">
+                    <div class="mode-control speed-mode">
                         <h4>速度控制</h4>
                         <div class="slider-control">
                             <label>速度值: <span id="speed-value">0</span>%</label>
                             <input type="range" id="speed-slider" min="0" max="100" value="0" step="1">
                         </div>
-                        <button id="send-speed-btn" class="send-btn">发送速度指令</button>
                     </div>
 
                     <!-- 位置模式控制 -->
-                    <div class="mode-control position-mode" style="display: none;">
+                    <div class="mode-control position-mode">
                         <h4>位置控制</h4>
                         <div class="slider-control">
                             <label>位置值: <span id="position-value">0.0</span>°</label>
                             <input type="range" id="position-slider" min="0" max="360" value="0" step="0.1">
                         </div>
-                        <button id="send-position-btn" class="send-btn">发送位置指令</button>
                     </div>
 
                     <!-- 校准模式控制 -->
-                    <div class="mode-control calibration-mode" style="display: none;">
+                    <div class="mode-control calibration-mode">
                         <h4>校准模式</h4>
                         <button id="send-calibration-btn" class="send-btn">发送校准指令</button>
                     </div>
 
                     <!-- 状态上报模式控制 -->
-                    <div class="mode-control status-mode" style="display: none;">
+                    <div class="mode-control status-mode">
                         <h4>状态上报模式</h4>
-                        <button id="send-status-enable-btn" class="send-btn">启用状态上报</button>
-                        <button id="send-status-disable-btn" class="send-btn">禁用状态上报</button>
+                        <div class="status-info">
+                            <p>当前状态：状态上报已启用</p>
+                            <p>数据将自动显示在图表区域</p>
+                        </div>
                     </div>
                 </div>
 

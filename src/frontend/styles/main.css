@@ -6,9 +6,11 @@
 }
 
 body {
-    font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
+    font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    color: #e0e0e0;
     overflow: hidden;
 }
 
@@ -17,7 +19,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
 }
 
 /* 头部样式 */
@@ -27,16 +29,17 @@ body {
     justify-content: space-between;
     padding: 0 20px;
     height: 60px;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid #e0e0e0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: 0 2px 20px rgba(0, 255, 255, 0.1);
 }
 
 .logo h1 {
     font-size: 20px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #87ceeb;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
 .menu {
@@ -109,13 +112,14 @@ body {
     flex: 1.5;
     display: flex;
     flex-direction: column;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 20px;
+    background: rgba(240, 240, 245, 0.9);
+    border: 1px solid rgba(100, 100, 120, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     margin-bottom: 0;
-    min-width: 0; /* 防止溢出 */
+    min-width: 0;
 }
 
 /* 数据通信区域 */
@@ -138,11 +142,12 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 12px;
     padding: 15px;
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
 }
 
 .device-tree, .parameter-list {
@@ -240,6 +245,22 @@ body {
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     margin-bottom: 0;
+}
+
+.chart-header {
+    height: 50px;
+    background: rgba(230, 230, 235, 0.9);
+    border-bottom: 1px solid rgba(100, 100, 120, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.chart-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
 }
 
 
@@ -403,26 +424,16 @@ body:not(.fullscreen) .data-communication {
 
 /* 控制面板 */
 .control-panel {
-    width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 20px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-/* 右侧控制面板 */
-.control-panel {
     width: 300px;
-    background: #f8f9fa;
-    border-left: 1px solid #dee2e6;
-    padding: 20px;
-    overflow-y: auto;
+    background: rgba(240, 240, 245, 0.9);
+    border: 1px solid rgba(100, 100, 120, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    padding: 20px;
     gap: 20px;
 }
 
@@ -668,14 +679,19 @@ body:not(.fullscreen) .data-communication {
     gap: 10px;
 }
 
+
+
 .mode-selector select {
     flex: 1;
     min-width: 120px;
-    padding: 8px 12px;
-    border: 1px solid #bdc3c7;
+    padding: 10px 14px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
     border-radius: 6px;
     font-size: 14px;
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
+    color: #2c3e50;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(100, 100, 120, 0.3);
 }
 
 .mode-selector button {
@@ -714,34 +730,39 @@ body:not(.fullscreen) .data-communication {
     display: block;
     margin-bottom: 8px;
     font-size: 13px;
-    color: #7f8c8d;
+    color: #2c3e50;
+    text-shadow: 0 0 3px rgba(0, 255, 255, 0.3);
 }
 
 .slider-control input[type="range"] {
     width: 100%;
     height: 6px;
     border-radius: 3px;
-    background: #ecf0f1;
+    background: rgba(100, 100, 120, 0.2);
     outline: none;
     -webkit-appearance: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .slider-control input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    background: #3498db;
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.4);
+    border: 1px solid rgba(74, 144, 226, 0.5);
 }
 
 .slider-control input[type="range"]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    background: #3498db;
+    background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
     cursor: pointer;
-    border: none;
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    box-shadow: 0 2px 8px rgba(0, 255, 255, 0.4);
 }
 
 /* 状态上报模式样式 */
@@ -755,8 +776,9 @@ body:not(.fullscreen) .data-communication {
     display: flex;
     align-items: center;
     font-size: 13px;
-    color: #7f8c8d;
+    color: #00ffff;
     cursor: pointer;
+    text-shadow: 0 0 3px rgba(0, 255, 255, 0.3);
 }
 
 .status-controls input[type="checkbox"] {
@@ -767,47 +789,54 @@ body:not(.fullscreen) .data-communication {
 }
 
 .serial-settings select {
-    padding: 6px 8px;
-    border: 1px solid #bdc3c7;
+    padding: 8px 10px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
     border-radius: 4px;
     font-size: 12px;
-    background: white;
+    background: rgba(0, 0, 0, 0.3);
+    color: #00ffff;
+    box-shadow: 0 1px 4px rgba(0, 255, 255, 0.1);
 }
 
 .connect-btn {
-    padding: 8px 16px;
-    border: none;
-    background: #e74c3c;
-    color: white;
+    padding: 10px 18px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
     border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
     transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ff0066 0%, #cc0052 100%);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(255, 0, 102, 0.3);
 }
 
 .connect-btn:hover {
-    background: #c0392b;
+    background: linear-gradient(135deg, #ff3388 0%, #dd0066 100%);
+    box-shadow: 0 4px 12px rgba(255, 0, 102, 0.4);
 }
 
 .connect-btn.connected {
-    background: #27ae60;
+    background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+    box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
 }
 
 .connect-btn.connected:hover {
-    background: #229954;
+    background: linear-gradient(135deg, #00ffaa 0%, #00dd77 100%);
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.4);
 }
 
 /* 底部状态栏 */
 .footer {
     height: 40px;
-    background: rgba(255, 255, 255, 0.95);
-    border-top: 1px solid #e0e0e0;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
     backdrop-filter: blur(10px);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -2px 10px rgba(0, 255, 255, 0.1);
 }
 
 .status-info {
@@ -815,7 +844,8 @@ body:not(.fullscreen) .data-communication {
     align-items: center;
     gap: 20px;
     font-size: 12px;
-    color: #7f8c8d;
+    color: #00ffff;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
 }
 
 /* 滚动条样式 */
@@ -824,17 +854,19 @@ body:not(.fullscreen) .data-communication {
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 4px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #bdc3c7;
+    background: rgba(0, 255, 255, 0.3);
     border-radius: 4px;
+    border: 1px solid rgba(0, 255, 255, 0.5);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #95a5a6;
+    background: rgba(0, 255, 255, 0.5);
 }
 
 /* 数据通信区域滚动条样式 */
@@ -843,17 +875,19 @@ body:not(.fullscreen) .data-communication {
 }
 
 .data-communication::-webkit-scrollbar-track {
-    background: rgba(241, 241, 241, 0.5);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 4px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
 }
 
 .data-communication::-webkit-scrollbar-thumb {
-    background: rgba(193, 193, 193, 0.7);
+    background: rgba(0, 255, 255, 0.3);
     border-radius: 4px;
+    border: 1px solid rgba(0, 255, 255, 0.5);
 }
 
 .data-communication::-webkit-scrollbar-thumb:hover {
-    background: rgba(149, 165, 166, 0.8);
+    background: rgba(0, 255, 255, 0.5);
 }
 
 .hex-display-area::-webkit-scrollbar {
@@ -861,17 +895,19 @@ body:not(.fullscreen) .data-communication {
 }
 
 .hex-display-area::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 3px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
 }
 
 .hex-display-area::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: rgba(0, 255, 255, 0.3);
     border-radius: 3px;
+    border: 1px solid rgba(0, 255, 255, 0.5);
 }
 
 .hex-display-area::-webkit-scrollbar-thumb:hover {
-    background: #95a5a6;
+    background: rgba(0, 255, 255, 0.5);
 }
 
 /* 数据通信区域样式 */
