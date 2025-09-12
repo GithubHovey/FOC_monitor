@@ -24,10 +24,13 @@ function createWindow() {
   // 加载应用的index.html文件
   mainWindow.loadFile(path.join(__dirname, '../frontend/pages/index.html'));
 
-  // 开发模式下打开开发者工具
-  if (process.argv.includes('--dev')) {
+  // 开发模式时打开开发者工具
+    if (process.argv.includes('--dev')) {
+        mainWindow.webContents.openDevTools();
+    }
+    
+    // 始终打开开发者工具（调试用途）
     mainWindow.webContents.openDevTools();
-  }
 
   // 当窗口关闭时触发
   mainWindow.on('closed', () => {

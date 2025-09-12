@@ -55,8 +55,38 @@
 
             <!-- 中部图表区域 -->
             <section class="chart-area">
-                <div class="chart-container">
-                    <canvas id="main-chart" width="800" height="400"></canvas>
+                <!-- 可移动视窗系统 -->
+                <div class="viewport-container">
+                    <!-- 视窗内容区域 -->
+                    <div class="viewport-content">
+                        <canvas id="main-chart" width="800" height="400"></canvas>
+                    </div>
+                    
+                    <!-- X轴滚动条 - 下方 -->
+                    <div class="viewport-scrollbar x-scrollbar">
+                        <div class="scrollbar-track" id="x-scrollbar-track">
+                            <div class="scrollbar-thumb" id="x-scrollbar-thumb"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Y轴滚动条 - 右侧 -->
+                    <div class="viewport-scrollbar y-scrollbar">
+                        <div class="scrollbar-track vertical" id="y-scrollbar-track">
+                            <div class="scrollbar-thumb" id="y-scrollbar-thumb"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 缩放控制 -->
+                    <div class="viewport-controls">
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" id="zoom-reset" title="重置视图">⌂</button>
+                            <button class="zoom-btn" id="zoom-fit" title="适应数据">⊞</button>
+                        </div>
+                        <div class="range-display">
+                            <span id="x-range-display">0-10s</span>
+                            <span id="y-range-display">-10-10</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="chart-controls">
@@ -71,6 +101,14 @@
                     <button id="export-btn" class="control-btn" title="导出数据">
                         <span class="icon">📥</span>
                         <span class="text">导出</span>
+                    </button>
+                    <button id="debug-log-btn" class="control-btn" title="显示/隐藏调试日志" style="background: #28a745;">
+                        <span class="icon">🐛</span>
+                        <span class="text">调试</span>
+                    </button>
+                    <button id="export-log-btn" class="control-btn" title="导出调试日志" style="background: #ffc107; color: black;">
+                        <span class="icon">📋</span>
+                        <span class="text">日志</span>
                     </button>
                 </div>
                 

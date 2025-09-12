@@ -154,6 +154,15 @@ class FOCMonitorApp {
             this.exportData();
         });
 
+        // 调试日志按钮事件
+        document.getElementById('debug-log-btn').addEventListener('click', () => {
+            this.toggleDebugLog();
+        });
+
+        document.getElementById('export-log-btn').addEventListener('click', () => {
+            this.exportDebugLog();
+        });
+
         // 串口连接按钮事件
         document.getElementById('connect-btn').addEventListener('click', () => {
             this.toggleSerialConnection();
@@ -464,18 +473,76 @@ class FOCMonitorApp {
 
     // 导出数据
     exportData() {
-        const data = this.chartManager.getData();
-        const csvContent = this.convertToCSV(data);
+        if (!this.chartManager) return;
         
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `foc_data_${new Date().toISOString().replace(/:/g, '-')}.csv`;
-        a.click();
-        
-        URL.revokeObjectURL(url);
+        try {
+            const data = this.chartManager.getData();
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `foc-data-${timestamp}.json`;
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            URL.revokeObjectURL(url);
+            this.showSuccess('数据导出成功');
+            
+        } catch (error) {
+            console.error('数据导出失败:', error);
+            this.showError('数据导出失败: ' + error.message);
+        }
+    }
+
+    // 切换调试日志显示
+    toggleDebugLog() {
+        if (this.chartManager && this.chartManager.viewport && this.chartManager.viewport.logger) {
+            const logger = this.chartManager.viewport.logger;
+            const logDiv = document.getElementById('viewport-debug-log');
+            
+            if (logDiv) {
+                logDiv.style.display = logDiv.style.display === 'none' ? 'block' : 'none';
+            } else {
+                // 创建调试日志显示区域
+                const chartContainer = document.querySelector('.chart-container') || document.body;
+                const debugDiv = document.createElement('div');
+                debugDiv.id = 'viewport-debug-log';
+                debugDiv.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    width: 300px;
+                    max-height: 400px;
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    font-family: monospace;
+                    font-size: 12px;
+                    padding: 10px;
+                    border-radius: 5px;
+                    z-index: 10000;
+                    overflow-y: auto;
+                    display: block;
+                `;
+                debugDiv.innerHTML = '<h4>视窗调试日志</h4><div id="log-content"></div>';
+                chartContainer.appendChild(debugDiv);
+            }
+        } else {
+            console.warn('调试日志系统未初始化');
+        }
+    }
+
+    // 导出调试日志
+    exportDebugLog() {
+        if (this.chartManager && this.chartManager.viewport && this.chartManager.viewport.logger) {
+            this.chartManager.viewport.logger.export();
+        } else {
+            console.warn('调试日志系统未初始化');
+        }
     }
 
 
