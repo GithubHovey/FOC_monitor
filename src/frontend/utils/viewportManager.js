@@ -339,8 +339,9 @@ class ViewportManager {
                     this.viewport.x.max = this.viewport.x.min + viewportRange;
                 } else {
                     const viewportRange = this.viewport.y.max - this.viewport.y.min;
-                    this.viewport.y.min = startViewportMin - scrollRatio * dataRange; // Y轴反向
-                    this.viewport.y.max = this.viewport.y.min + viewportRange;
+                    // 修复Y轴拖拽方向：向上拖拽显示上方数据，向下拖拽显示下方数据
+                    this.viewport.y.max = startViewport.y.max + scrollRatio * dataRange;
+                    this.viewport.y.min = this.viewport.y.max - viewportRange;
                 }
                 
                 this.clampViewport();
@@ -458,8 +459,8 @@ class ViewportManager {
             this.viewport.x.min += scrollAmount;
             this.viewport.x.max += scrollAmount;
         } else {
-            this.viewport.y.min -= scrollAmount; // Y轴反向
-            this.viewport.y.max -= scrollAmount;
+            this.viewport.y.max += scrollAmount; // 修复Y轴滚动方向
+            this.viewport.y.min += scrollAmount;
         }
         
         this.clampViewport();
@@ -479,8 +480,8 @@ class ViewportManager {
         
         this.viewport.x.min -= panX;
         this.viewport.x.max -= panX;
-        this.viewport.y.min += panY; // Y轴反向
-        this.viewport.y.max += panY;
+        this.viewport.y.max += panY; // 修复Y轴拖拽方向
+        this.viewport.y.min += panY;
         
         this.clampViewport();
         this.updateDisplay();
@@ -574,8 +575,9 @@ class ViewportManager {
         } else {
             const yRange = this.dataRange.y.max - this.dataRange.y.min;
             const yViewportRange = this.viewport.y.max - this.viewport.y.min;
-            this.viewport.y.min = this.dataRange.y.min + newPos * (yRange - yViewportRange);
-            this.viewport.y.max = this.viewport.y.min + yViewportRange;
+            // 修复Y轴方向：点击顶部应该显示顶部数据，点击底部应该显示底部数据
+            this.viewport.y.max = this.dataRange.y.max - newPos * (yRange - yViewportRange);
+            this.viewport.y.min = this.viewport.y.max - yViewportRange;
         }
         
         this.clampViewport();

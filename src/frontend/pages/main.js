@@ -26,18 +26,19 @@ class FOCMonitorApp {
                 await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
             }
 
-            // 初始化各个模块
-        await this.initChartManager();
-        await this.initVisibilityManager();
-// 初始化事件监听器
-        this.initEventListeners();
-        this.initSerialPorts();
-        this.initCurveSelection();
+            // 初始化日志系统
+            await this.initLogger();
 
-        this.initDataCommunication();
-        this.initModeControls();
-        this.initRWDataControls();
-        this.startStatusUpdates();
+            // 初始化各个模块
+            await this.initChartManager();
+            await this.initVisibilityManager();
+            this.initEventListeners();
+            this.initSerialPorts();
+            this.initCurveSelection();
+            this.initDataCommunication();
+            this.initModeControls();
+            this.initRWDataControls();
+            this.startStatusUpdates();
 
             this.isInitialized = true;
             console.log('FOC电机控制上位机初始化完成');
@@ -45,6 +46,33 @@ class FOCMonitorApp {
         } catch (error) {
             console.error('应用初始化失败:', error);
             this.showError('应用初始化失败: ' + error.message);
+        }
+    }
+
+    // 初始化日志系统
+    async initLogger() {
+        try {
+            // 日志系统通过logger.js自动初始化
+            console.log('日志系统初始化...');
+            
+            // 确保logger.js已加载
+            if (typeof window.logger === 'undefined') {
+                console.warn('等待日志系统加载...');
+                await new Promise(resolve => {
+                    const checkLogger = () => {
+                        if (typeof window.logger !== 'undefined') {
+                            resolve();
+                        } else {
+                            setTimeout(checkLogger, 100);
+                        }
+                    };
+                    checkLogger();
+                });
+            }
+            
+            window.logger.info('FOC电机控制上位机开始初始化');
+        } catch (error) {
+            console.error('日志系统初始化失败:', error);
         }
     }
 
@@ -139,7 +167,15 @@ class FOCMonitorApp {
             });
         }
 
-
+        // 日志图标点击事件
+        const loggerIcon = document.getElementById('logger-icon');
+        if (loggerIcon) {
+            loggerIcon.addEventListener('click', () => {
+                if (window.logger) {
+                    window.logger.toggle();
+                }
+            });
+        }
 
         // 控制按钮事件
         document.getElementById('pause-btn').addEventListener('click', () => {
@@ -174,6 +210,7 @@ class FOCMonitorApp {
         });
 
         this.serialManager.onError((error) => {
+            window.logger.error('串口错误', error);
             this.showError('串口错误: ' + error);
         });
     }
@@ -261,26 +298,33 @@ class FOCMonitorApp {
         
         if (this.serialManager.isConnected) {
             // 断开连接
+            window.logger.info('正在断开串口连接...');
             await this.serialManager.closePort();
             connectBtn.textContent = '连接';
             connectBtn.classList.remove('connected');
             this.updateConnectionStatus(false);
+            window.logger.success('串口连接已断开');
         } else {
             // 连接串口
             const portName = portSelect.value;
             const baudRate = parseInt(baudRateSelect.value);
             
             if (!portName) {
+                window.logger.error('请选择串口');
                 this.showError('请选择串口');
                 return;
             }
             
+            window.logger.info(`正在连接串口 ${portName}，波特率 ${baudRate}...`);
             const success = await this.serialManager.openPort(portName, baudRate);
             
             if (success) {
                 connectBtn.textContent = '断开';
                 connectBtn.classList.add('connected');
                 this.updateConnectionStatus(true);
+                window.logger.success(`串口 ${portName} 连接成功，波特率 ${baudRate}`);
+            } else {
+                window.logger.error(`串口 ${portName} 连接失败`);
             }
         }
     }

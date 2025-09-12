@@ -622,40 +622,45 @@ class ChartManager {
 
         thumb.addEventListener('mousedown', onMouseDown);
         
-        // 点击轨道跳转到对应位置
+        // 点击轨道跳转到位置
         track.addEventListener('mousedown', (e) => {
+            e.preventDefault();
             if (e.target === thumb) return;
             
             const trackRect = track.getBoundingClientRect();
             const clickPos = axis === 'x' ? e.clientX - trackRect.left : e.clientY - trackRect.top;
             const thumbSize = axis === 'x' ? thumb.offsetWidth : thumb.offsetHeight;
             const trackSize = axis === 'x' ? track.offsetWidth : track.offsetHeight;
+            const usableTrackSize = trackSize - thumbSize;
             
-            let newThumbPos = Math.max(0, Math.min(trackSize - thumbSize, clickPos - thumbSize / 2));
-            let ratio = (trackSize - thumbSize) > 0 ? newThumbPos / (trackSize - thumbSize) : 0;
+            let newThumbPos = Math.max(0, Math.min(usableTrackSize, clickPos - thumbSize / 2));
+            let ratio = usableTrackSize > 0 ? newThumbPos / usableTrackSize : 0;
             
             if (axis === 'x') {
+                const startRange = this.chart.options.scales.x.max - this.chart.options.scales.x.min;
+                const newMin = Math.max(0, Math.min(1000000 - startRange, ratio * (1000000 - startRange)));
+                const newMax = newMin + startRange;
+                
+                this.chart.options.scales.x.min = newMin;
+                this.chart.options.scales.x.max = newMax;
+                
                 thumb.style.left = `${newThumbPos}px`;
                 
-                // 根据新的X轴范围逻辑计算偏移
-                const currentTime = this.data.labels.length > 0 ? this.data.labels[this.data.labels.length - 1] : 0;
-                const maxTime = currentTime + 10; // 始终为当前时间+10秒
-                const viewWidth = this.canvas.parentElement.clientWidth;
-                
-                // 计算可滚动区域
-                const canvasWidth = maxTime * this.viewport.scaleX;
-                const maxOffsetX = Math.max(0, canvasWidth - viewWidth);
-                this.viewport.x = -ratio * maxOffsetX;
             } else {
-                thumb.style.top = `${newThumbPos}px`;
+                const startRange = this.chart.options.scales.y.max - this.chart.options.scales.y.min;
                 
-                const canvasHeight = this.canvas.offsetHeight * this.viewport.scaleY;
-                const viewHeight = this.canvas.parentElement.clientHeight;
-                const maxOffsetY = Math.max(0, canvasHeight - viewHeight);
-                this.viewport.y = -ratio * maxOffsetY;
+                // 修正方向计算：ratio直接对应数据范围比例
+                const dataMin = -65535 + (ratio * (131070 - startRange));
+                const newMax = Math.min(65535, dataMin + startRange);
+                const newMin = Math.max(-65535, dataMin);
+                
+                this.chart.options.scales.y.min = newMin;
+                this.chart.options.scales.y.max = newMax;
+                
+                thumb.style.top = `${newThumbPos}px`;
             }
             
-            this.updateViewportTransform();
+            this.chart.update();
         });
     }
 
@@ -909,6 +914,7 @@ class ChartManager {
         
         // 点击轨道跳转到位置
         track.addEventListener('mousedown', (e) => {
+            e.preventDefault();
             if (e.target === thumb) return;
             
             const trackRect = track.getBoundingClientRect();
@@ -932,8 +938,11 @@ class ChartManager {
                 
             } else {
                 const startRange = this.chart.options.scales.y.max - this.chart.options.scales.y.min;
-                const newMax = Math.max(-65535 + startRange, Math.min(65535, 65535 - (ratio * (131070 - startRange))));
-                const newMin = newMax - startRange;
+                
+                // 修正方向计算：ratio直接对应数据范围比例
+                const dataMin = -65535 + (ratio * (131070 - startRange));
+                const newMax = Math.min(65535, dataMin + startRange);
+                const newMin = Math.max(-65535, dataMin);
                 
                 this.chart.options.scales.y.min = newMin;
                 this.chart.options.scales.y.max = newMax;

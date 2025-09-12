@@ -31,11 +31,20 @@ class SerialManager {
             }
             
             const ports = await window.electronAPI.getSerialPorts();
-            return ports.filter(port => 
+            const filteredPorts = ports.filter(port => 
                 port.path && !port.path.includes('Bluetooth')
             );
+            
+            if (window.logger) {
+                window.logger.info(`发现 ${filteredPorts.length} 个可用串口`, filteredPorts);
+            }
+            
+            return filteredPorts;
         } catch (error) {
             console.error('获取串口列表失败:', error);
+            if (window.logger) {
+                window.logger.error('获取串口列表失败', error.message);
+            }
             return [];
         }
     }
@@ -68,6 +77,10 @@ class SerialManager {
                     connected: true
                 });
                 
+                if (window.logger) {
+                    window.logger.success(`串口 ${portName} 已连接，波特率 ${baudRate}`);
+                }
+                
                 return true;
             } else {
                 throw new Error(result.error);
@@ -75,6 +88,9 @@ class SerialManager {
         } catch (error) {
             console.error('打开串口失败:', error);
             this.notifyErrorCallbacks(error.message);
+            if (window.logger) {
+                window.logger.error(`打开串口失败: ${portName} - ${error.message}`);
+            }
             return false;
         }
     }
@@ -95,6 +111,10 @@ class SerialManager {
                         connected: false
                     });
                     
+                    if (window.logger) {
+                        window.logger.info('串口已断开');
+                    }
+                    
                     return true;
                 } else {
                     throw new Error(result.error);
@@ -104,6 +124,9 @@ class SerialManager {
         } catch (error) {
             console.error('关闭串口失败:', error);
             this.notifyErrorCallbacks(error.message);
+            if (window.logger) {
+                window.logger.error('关闭串口失败', error.message);
+            }
             return false;
         }
     }

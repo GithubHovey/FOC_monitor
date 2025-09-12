@@ -108,9 +108,16 @@ class DataCommunicationManager {
             
             this.showMessage('数据发送成功', 'success');
             
+            if (window.logger) {
+                window.logger.info(`发送数据: ${this.bytesToHexString(bytes)}`);
+            }
+            
         } catch (error) {
             console.error('发送数据失败:', error);
             this.showMessage('发送失败: ' + error.message, 'error');
+            if (window.logger) {
+                window.logger.error('发送数据失败', error.message);
+            }
         }
     }
 
@@ -163,6 +170,10 @@ class DataCommunicationManager {
 
         // 更新显示
         this.updateReceiveDisplay();
+        
+        if (window.logger) {
+            window.logger.info(`接收数据: ${hexDisplay}`);
+        }
     }
 
     bytesToHexString(bytes) {

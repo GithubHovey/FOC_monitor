@@ -6,6 +6,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:">
     <title>FOC电机控制上位机</title>
     <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/logger.css">
 </head>
 <body>
     <div class="app-container">
@@ -17,6 +18,10 @@
             <div class="status-bar">
                 <span id="connection-status" class="status-offline">未连接</span>
                 <span id="data-rate">0 Hz</span>
+                <div class="logger-icon" id="logger-icon" title="查看日志">
+                    <span class="icon">📋</span>
+                    <span class="notification-dot" id="logger-notification" style="display: none;">!</span>
+                </div>
             </div>
         </header>
 
@@ -285,12 +290,31 @@
         </footer>
     </div>
 
+    <!-- 日志窗口 -->
+    <div class="logger-window" id="logger-window">
+        <div class="logger-header">
+            <h3>系统日志</h3>
+            <div class="logger-controls">
+                <button id="clear-logs-btn" class="logger-btn">清空</button>
+                <button id="close-logs-btn" class="logger-btn">关闭</button>
+            </div>
+        </div>
+        <div class="logger-content" id="logger-content">
+            <div class="logger-placeholder">暂无日志记录</div>
+        </div>
+        <div class="logger-footer">
+            <span id="log-count">0 条记录</span>
+            <button id="export-logs-btn" class="logger-btn">导出日志</button>
+        </div>
+    </div>
+
     <!-- JavaScript文件 -->
     <script src="../assets/chart.js"></script>
     <script src="../utils/serial.js"></script>
     <script src="../utils/chartManager.js"></script>
     <script src="../components/visibilityManager.js"></script>
     <script src="../components/visibilityPanel.js"></script>
+    <script src="../utils/logger.js"></script>
     
     <script type="module" src="../utils/dataCommunication.js"></script>
     <script type="module" src="main.js"></script>
