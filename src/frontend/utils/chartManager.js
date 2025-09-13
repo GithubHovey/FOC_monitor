@@ -92,26 +92,55 @@ class ChartManager {
             this.chart.destroy();
         }
         
-        // 创建图表 - 使用全局Chart对象
-        if (typeof Chart === 'undefined') {
-            throw new Error('Chart.js库未正确加载，请检查HTML中的script标签');
-        }
+        // 创建图表
         this.chart = new Chart(this.ctx, mergedConfig);
-        
-        // 初始化新的视窗系统
-        this.setupViewportSystem();
         
         // 设置FOC电机控制的数据范围
         this.dataRange = {
-            x: { min: 0, max: 1000000 }, // 最大100万ms (1000秒)
-            y: { min: -65535, max: 65535 } // FOC电机控制完整数据范围
+            x: { min: 0, max: 1000000 },
+            y: { min: -65535, max: 65535 }
         };
         
         // 设置鼠标滚轮缩放
         this.setupMouseWheelZoom();
         
+        // 设置滚动条控制（只调用一次）
+        this.setupScrollbarControls();
+        
         // 应用初始视窗设置
         this.resetToInitialView();
+    }
+
+    // 重置到初始视图 - FOC标准范围
+    resetToInitialView() {
+        if (!this.chart) return;
+
+        // FOC标准初始视图范围
+        const yMin = -6000;
+        const yMax = 6000;
+        
+        // X轴固定范围：0~10000ms
+        const xMin = 0;
+        const xMax = 10000;
+
+        // 设置图表范围
+        this.chart.options.scales.x.min = xMin;
+        this.chart.options.scales.x.max = xMax;
+        this.chart.options.scales.y.min = yMin;
+        this.chart.options.scales.y.max = yMax;
+
+        this.chart.update('none');
+        this.updateScrollbars();
+    }
+
+    // 清理viewport相关方法
+    setupViewportSystem() {
+        // 这个方法现在是空的，使用Chart.js坐标系
+    }
+
+    // 清理setupScrollbarEvents方法
+    setupScrollbarEvents() {
+        // 这个方法现在是空的，使用setupScrollbarControls代替
     }
 
     // 合并配置对象
@@ -358,78 +387,8 @@ class ChartManager {
     resetViewport() {
         // 这个方法现在不需要了，使用resetToInitialView
     }
-    
-    // 添加缺失的resetToInitialView方法
-    resetToInitialView() {
-        if (!this.chart) return;
-        
-        this.chart.options.scales.x.min = 0;
-        this.chart.options.scales.x.max = 10000; // 0~10000ms
-        this.chart.options.scales.y.min = -5000; // -5000~5000
-        this.chart.options.scales.y.max = 5000;
-        
-        this.chart.update();
-        this.updateScrollbars(); // 更新滚动条状态
-    }
-    
-    // 确保fitToData方法存在且正确
-    fitToData() {
-        if (!this.chart || this.data.datasets.length === 0) return;
-        
-        // 获取数据范围
-        let minX = 0;
-        let maxX = 10000;
-        let minY = -5000;
-        let maxY = 5000;
-        
-        if (this.data.labels.length > 0) {
-            minX = Math.min(...this.data.labels);
-            maxX = Math.max(...this.data.labels);
-        }
-        
-        this.data.datasets.forEach(dataset => {
-            if (dataset.data.length > 0) {
-                minY = Math.min(minY, Math.min(...dataset.data));
-                maxY = Math.max(maxY, Math.max(...dataset.data));
-            }
-        });
-        
-        // 添加边距
-        const xMargin = Math.max(1000, (maxX - minX) * 0.1);
-        const yMargin = Math.max(500, (maxY - minY) * 0.1);
-        
-        minX -= xMargin;
-        maxX += xMargin;
-        minY -= yMargin;
-        maxY += yMargin;
-        
-        // 限制范围
-        minY = Math.max(-65535, minY);
-        maxY = Math.min(65535, maxY);
-        minX = Math.max(0, minX);
-        
-        this.chart.options.scales.x.min = minX;
-        this.chart.options.scales.x.max = maxX;
-        this.chart.options.scales.y.min = minY;
-        this.chart.options.scales.y.max = maxY;
-        
-        this.chart.update();
-        this.updateScrollbars();
-    }
 
-    updateViewportTransform() {
-        if (!this.canvas) return;
-        
-        // 应用边界限制
-        this.enforceViewportBounds();
-        
-        // 应用变换
-        this.canvas.style.transform = `translate(${this.viewport.x}px, ${this.viewport.y}px) scale(${this.viewport.scaleX}, ${this.viewport.scaleY})`;
-    }
-
-    // 删除重复的viewport相关方法
-    // 只保留Chart.js坐标系的updateScrollbars方法
-    
+    // 更新滚动条状态 - 基于FOC实际数据范围
     updateScrollbars() {
         if (!this.chart) return;
         
@@ -439,310 +398,59 @@ class ChartManager {
         const yTrack = document.getElementById('y-scrollbar-track');
         
         if (!xThumb || !yThumb || !xTrack || !yTrack) return;
-    
-        // 获取当前数据范围
-        const xMin = this.chart.options.scales.x.min || 0;
-        const xMax = this.chart.options.scales.x.max || 10000;
-        const yMin = this.chart.options.scales.y.min || -5000;
-        const yMax = this.chart.options.scales.y.max || 5000;
-    
-        // 计算数据总范围
-        const totalXRange = Math.max(10000, xMax - xMin);
-        const totalYRange = Math.max(10000, yMax - yMin);
-    
-        // 计算可视范围比例
-        const visibleXRatio = Math.min(1, 10000 / totalXRange);
-        const visibleYRatio = Math.min(1, 10000 / totalYRange);
-    
-        // 设置thumb大小
-        xThumb.style.width = `${Math.max(5, visibleXRatio * 100)}%`;
-        yThumb.style.height = `${Math.max(5, visibleYRatio * 100)}%`;
-    
+
+        // 获取当前视图范围
+        const viewXMin = this.chart.options.scales.x.min;
+        const viewXMax = this.chart.options.scales.x.max;
+        const viewYMin = this.chart.options.scales.y.min;
+        const viewYMax = this.chart.options.scales.y.max;
+
+        // FOC实际数据总范围
+        const totalYMin = -65535;
+        const totalYMax = 65535;
+        const totalYRange = totalYMax - totalYMin; // 131070
+
+        // X轴固定总范围：0~10000ms
+        const totalXRange = 10000;
+
+        // 当前视图范围
+        const viewXRange = Math.max(100, viewXMax - viewXMin);
+        const viewYRange = Math.max(100, viewYMax - viewYMin);
+
+        // 计算滚动条比例
+        const xRatio = viewXRange / totalXRange;
+        const yRatio = viewYRange / totalYRange;
+
+        // 始终显示滚动条，但当占满100%时使用固定小宽度
+        const xThumbWidth = xRatio >= 0.99 ? 8 : Math.max(5, Math.min(95, xRatio * 100));
+        const yThumbHeight = yRatio >= 0.99 ? 8 : Math.max(5, Math.min(95, yRatio * 100));
+
+        xThumb.style.width = `${xThumbWidth}%`;
+        yThumb.style.height = `${yThumbHeight}%`;
+
+        // 始终显示滚动条轨道
+        xTrack.style.display = 'block';
+        yTrack.style.display = 'block';
+
         // 计算thumb位置
-        const xThumbWidth = parseFloat(xThumb.style.width);
-        const yThumbHeight = parseFloat(yThumb.style.height);
-    
-        // 计算当前位置比例
-        const xPositionRatio = xMin / Math.max(10000, totalXRange - 10000);
-        const yPositionRatio = (yMax - 5000) / Math.max(10000, totalYRange - 10000);
-    
-        xThumb.style.left = `${Math.max(0, Math.min(100 - xThumbWidth, xPositionRatio * (100 - xThumbWidth)))}%`;
-        yThumb.style.top = `${Math.max(0, Math.min(100 - yThumbHeight, yPositionRatio * (100 - yThumbHeight)))}%`;
+        const xOffset = viewXMin;
+        const maxXOffset = totalXRange - viewXRange;
+        const xPosition = Math.max(0, Math.min(100 - xThumbWidth, (xOffset / Math.max(1, maxXOffset)) * (100 - xThumbWidth)));
+        xThumb.style.left = `${xPosition}%`;
+
+        const yOffset = totalYMax - viewYMax;
+        const maxYOffset = totalYRange - viewYRange;
+        const yPosition = Math.max(0, Math.min(100 - yThumbHeight, (yOffset / Math.max(1, maxYOffset)) * (100 - yThumbHeight)));
+        yThumb.style.top = `${yPosition}%`;
+
+        // 根据比例设置样式提示
+        xThumb.style.opacity = xRatio >= 0.99 ? '0.5' : '1';
+        yThumb.style.opacity = yRatio >= 0.99 ? '0.5' : '1';
+        xThumb.style.cursor = xRatio >= 0.99 ? 'default' : 'grab';
+        yThumb.style.cursor = yRatio >= 0.99 ? 'default' : 'grab';
     }
 
-    setupScrollbarEvents() {
-        const xThumb = document.getElementById('x-scrollbar-thumb');
-        const yThumb = document.getElementById('y-scrollbar-thumb');
-        const xTrack = document.getElementById('x-scrollbar-track');
-        const yTrack = document.getElementById('y-scrollbar-track');
-        
-        if (!xThumb || !yThumb || !xTrack || !yTrack) return;
-
-        // X轴滚动条拖拽
-        this.setupScrollbarDrag(xThumb, xTrack, 'x');
-        this.setupScrollbarDrag(yThumb, yTrack, 'y');
-    }
-
-    setupScrollbarDrag(thumb, track, axis) {
-        let isDragging = false;
-        let startPos = 0;
-        let startThumbPos = 0;
-
-        const onMouseDown = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            isDragging = true;
-            startPos = axis === 'x' ? e.clientX : e.clientY;
-            startThumbPos = axis === 'x' ? thumb.offsetLeft : thumb.offsetTop;
-            
-            thumb.style.cursor = 'grabbing';
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        };
-
-        const onMouseMove = (e) => {
-            if (!isDragging) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const currentPos = axis === 'x' ? e.clientX : e.clientY;
-            const delta = currentPos - startPos;
-            
-            const trackSize = axis === 'x' ? track.offsetWidth : track.offsetHeight;
-            const thumbSize = axis === 'x' ? thumb.offsetWidth : thumb.offsetHeight;
-            const maxThumbPos = trackSize - thumbSize;
-            
-            let newThumbPos = Math.max(0, Math.min(maxThumbPos, startThumbPos + delta));
-            let ratio = maxThumbPos > 0 ? newThumbPos / maxThumbPos : 0;
-            
-            if (axis === 'x') {
-                thumb.style.left = `${newThumbPos}px`;
-                
-                // 根据新的X轴范围逻辑计算偏移
-                const currentTime = this.data.labels.length > 0 ? this.data.labels[this.data.labels.length - 1] : 0;
-                const maxTime = currentTime + 10; // 始终为当前时间+10秒
-                const viewWidth = this.canvas.parentElement.clientWidth;
-                
-                // 计算可滚动区域
-                const canvasWidth = maxTime * this.viewport.scaleX; // 使用时间范围而不是像素
-                const maxOffsetX = Math.max(0, canvasWidth - viewWidth);
-                this.viewport.x = -ratio * maxOffsetX;
-            } else {
-                thumb.style.top = `${newThumbPos}px`;
-                
-                const canvasHeight = this.canvas.offsetHeight * this.viewport.scaleY;
-                const viewHeight = this.canvas.parentElement.clientHeight;
-                const maxOffsetY = Math.max(0, canvasHeight - viewHeight);
-                this.viewport.y = -ratio * maxOffsetY;
-            }
-            
-            this.updateViewportTransform();
-        };
-
-        const onMouseUp = () => {
-            isDragging = false;
-            thumb.style.cursor = 'grab';
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        };
-
-        thumb.addEventListener('mousedown', onMouseDown);
-        
-        // 点击轨道跳转到位置
-        track.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            if (e.target === thumb) return;
-            
-            const trackRect = track.getBoundingClientRect();
-            const clickPos = axis === 'x' ? e.clientX - trackRect.left : e.clientY - trackRect.top;
-            const thumbSize = axis === 'x' ? thumb.offsetWidth : thumb.offsetHeight;
-            const trackSize = axis === 'x' ? track.offsetWidth : track.offsetHeight;
-            const usableTrackSize = trackSize - thumbSize;
-            
-            let newThumbPos = Math.max(0, Math.min(usableTrackSize, clickPos - thumbSize / 2));
-            let ratio = usableTrackSize > 0 ? newThumbPos / usableTrackSize : 0;
-            
-            if (axis === 'x') {
-                const startRange = this.chart.options.scales.x.max - this.chart.options.scales.x.min;
-                const newMin = Math.max(0, Math.min(1000000 - startRange, ratio * (1000000 - startRange)));
-                const newMax = newMin + startRange;
-                
-                this.chart.options.scales.x.min = newMin;
-                this.chart.options.scales.x.max = newMax;
-                
-                thumb.style.left = `${newThumbPos}px`;
-                
-            } else {
-                const startRange = this.chart.options.scales.y.max - this.chart.options.scales.y.min;
-                
-                // 修正方向计算：ratio直接对应数据范围比例
-                const dataMin = -65535 + (ratio * (131070 - startRange));
-                const newMax = Math.min(65535, dataMin + startRange);
-                const newMin = Math.max(-65535, dataMin);
-                
-                this.chart.options.scales.y.min = newMin;
-                this.chart.options.scales.y.max = newMax;
-                
-                thumb.style.top = `${newThumbPos}px`;
-            }
-            
-            this.chart.update();
-        });
-    }
-
-    // 设置图表类型
-    setType(type) {
-        if (this.chart) {
-            this.chart.config.type = type;
-            this.chart.update();
-        }
-    }
-
-    // 设置Y轴范围
-    setYRange(min, max) {
-        if (this.chart) {
-            this.chart.options.scales.y.min = min;
-            this.chart.options.scales.y.max = max;
-            this.chart.update();
-        }
-    }
-
-    // 自动调整Y轴范围
-    autoScaleY() {
-        if (!this.chart || this.data.datasets.length === 0) return;
-        
-        let min = Infinity;
-        let max = -Infinity;
-        
-        // 查找所有数据集的最小最大值
-        this.data.datasets.forEach(dataset => {
-            if (dataset.data.length > 0) {
-                const datasetMin = Math.min(...dataset.data);
-                const datasetMax = Math.max(...dataset.data);
-                
-                min = Math.min(min, datasetMin);
-                max = Math.max(max, datasetMax);
-            }
-        });
-        
-        // 添加一些边距
-        const range = max - min;
-        const margin = range * 0.1;
-        
-        this.setYRange(min - margin, max + margin);
-    }
-
-    // 显示/隐藏数据集
-    toggleDatasetVisibility(index) {
-        if (this.chart && index >= 0 && index < this.data.datasets.length) {
-            const meta = this.chart.getDatasetMeta(index);
-            meta.hidden = !meta.hidden;
-            this.chart.update();
-        }
-    }
-
-    // 根据参数ID更新数据集可视性
-    updateDatasetVisibility(paramId, isVisible) {
-        if (!this.chart) return;
-        
-        // 查找包含参数ID的数据集
-        this.data.datasets.forEach((dataset, index) => {
-            if ((dataset.paramId && dataset.paramId === paramId) || 
-                (dataset.label && dataset.label.includes(paramId))) {
-                const meta = this.chart.getDatasetMeta(index);
-                meta.hidden = !isVisible;
-            }
-        });
-        
-        this.chart.update();
-    }
-
-    // 获取数据集的可视性状态
-    getDatasetVisibility(index) {
-        if (!this.chart || index < 0 || index >= this.data.datasets.length) {
-            return false;
-        }
-        
-        const meta = this.chart.getDatasetMeta(index);
-        return !meta.hidden;
-    }
-
-    // 根据标签名查找数据集索引
-    findDatasetIndexByLabel(labelPattern) {
-        return this.data.datasets.findIndex(dataset => 
-            dataset.label && dataset.label.includes(labelPattern)
-        );
-    }
-
-    // 批量更新数据集可视性
-    updateMultipleDatasetsVisibility(visibilityMap) {
-        if (!this.chart) return;
-        
-        Object.entries(visibilityMap).forEach(([paramId, isVisible]) => {
-            this.updateDatasetVisibility(paramId, isVisible);
-        });
-    }
-
-    // 获取可见的数据集数量
-    getVisibleDatasetCount() {
-        if (!this.chart) return 0;
-        
-        return this.data.datasets.filter((dataset, index) => {
-            const meta = this.chart.getDatasetMeta(index);
-            return !meta.hidden;
-        }).length;
-    }
-
-    // 设置鼠标滚轮缩放 - 以鼠标坐标为中心
-    setupMouseWheelZoom() {
-        if (!this.canvas) return;
-        
-        this.canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            
-            const rect = this.canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            
-            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-            
-            // 计算当前鼠标对应的数据坐标
-            const xScale = this.chart.scales.x;
-            const yScale = this.chart.scales.y;
-            
-            const dataMouseX = xScale.getValueForPixel(mouseX);
-            const dataMouseY = yScale.getValueForPixel(mouseY);
-            
-            // 计算新的范围
-            const currentXRange = xScale.max - xScale.min;
-            const currentYRange = yScale.max - yScale.min;
-            
-            const newXRange = Math.max(1000, Math.min(1000000, currentXRange * zoomFactor));
-            const newYRange = Math.max(1000, Math.min(131070, currentYRange * zoomFactor));
-            
-            // 确保不超出数据范围
-            const newXMin = Math.max(0, Math.min(1000000 - newXRange, dataMouseX - (mouseX / rect.width) * newXRange));
-            const newXMax = newXMin + newXRange;
-            
-            const newYMin = Math.max(-65535, Math.min(65535 - newYRange, dataMouseY - (mouseY / rect.height) * newYRange));
-            const newYMax = newYMin + newYRange;
-            
-            // 应用新的范围
-            this.chart.options.scales.x.min = newXMin;
-            this.chart.options.scales.x.max = newXMax;
-            this.chart.options.scales.y.min = newYMin;
-            this.chart.options.scales.y.max = newYMax;
-            
-            this.chart.update();
-            this.updateScrollbars(); // 更新滚动条
-        });
-        
-        // 设置滚动条控制
-        this.setupScrollbarControls();
-    }
-    
-    // 设置滚动条控制
+    // 设置滚动条控制 - 统一实现
     setupScrollbarControls() {
         const xTrack = document.getElementById('x-scrollbar-track');
         const xThumb = document.getElementById('x-scrollbar-thumb');
@@ -750,111 +458,52 @@ class ChartManager {
         const yThumb = document.getElementById('y-scrollbar-thumb');
         
         if (!xTrack || !xThumb || !yTrack || !yThumb) return;
-        
-        const xMin = this.chart.options.scales.x.min;
-        const xMax = this.chart.options.scales.x.max;
-        const yMin = this.chart.options.scales.y.min;
-        const yMax = this.chart.options.scales.y.max;
-        
-        const xRange = xMax - xMin;
-        const yRange = yMax - yMin;
-        
-        // 获取实际数据范围
-        let dataMinX = 0;
-        let dataMaxX = 10000; // 默认10秒
-        let dataMinY = -5000;
-        let dataMaxY = 5000;
-        
-        if (this.data.labels.length > 0) {
-            dataMinX = Math.min(...this.data.labels);
-            dataMaxX = Math.max(...this.data.labels) + 10000; // 添加10秒缓冲区
-        }
-        
-        if (this.data.datasets.length > 0) {
-            this.data.datasets.forEach(dataset => {
-                if (dataset.data.length > 0) {
-                    dataMinY = Math.min(dataMinY, Math.min(...dataset.data));
-                    dataMaxY = Math.max(dataMaxY, Math.max(...dataset.data));
-                }
-            });
-            // 添加边距
-            const margin = (dataMaxY - dataMinY) * 0.1;
-            dataMinY -= margin;
-            dataMaxY += margin;
-        }
-        
-        dataMinY = Math.max(-65535, dataMinY);
-        dataMaxY = Math.min(65535, dataMaxY);
-        
-        const totalXRange = Math.max(dataMaxX, 10000); // 至少10秒
-        const totalYRange = dataMaxY - dataMinY;
-        
-        // X轴滚动条
-        const xRatio = xRange / totalXRange;
-        const xThumbWidth = Math.max(20, xTrack.offsetWidth * (1 - Math.min(0.95, Math.max(0.05, xRatio))));
-        
-        if (xRatio < 0.95) {
-            const xMaxOffset = totalXRange - xRange;
-            const xOffsetRatio = xMaxOffset > 0 ? xMin / xMaxOffset : 0;
-            xThumb.style.width = `${xThumbWidth}px`;
-            xThumb.style.left = `${xOffsetRatio * (xTrack.offsetWidth - xThumbWidth)}px`;
-            xThumb.style.display = 'block';
-        } else {
-            xThumb.style.display = 'none';
-        }
-        
-        // Y轴滚动条
-        const yRatio = yRange / totalYRange;
-        const yThumbHeight = Math.max(20, yTrack.offsetHeight * (1 - Math.min(0.95, Math.max(0.05, yRatio))));
-        
-        if (yRatio < 0.95) {
-            const yMaxOffset = totalYRange - yRange;
-            const yOffsetRatio = yMaxOffset > 0 ? (dataMaxY - yMax) / yMaxOffset : 0;
-            yThumb.style.height = `${yThumbHeight}px`;
-            yThumb.style.top = `${yOffsetRatio * (yTrack.offsetHeight - yThumbHeight)}px`;
-            yThumb.style.display = 'block';
-        } else {
-            yThumb.style.display = 'none';
-        }
+
+        // 设置拖拽事件
+        this.setupScrollbarDragEvent(xThumb, xTrack, 'x');
+        this.setupScrollbarDragEvent(yThumb, yTrack, 'y');
     }
 
-    // 设置滚动条拖拽 - 修复坐标计算
-    setupScrollbarDrag(track, thumb, axis) {
+    // 修正的滚动条拖拽事件处理
+    setupScrollbarDragEvent(thumb, track, axis) {
         let isDragging = false;
         let startMousePos = 0;
         let startRangeStart = 0;
         let startRangeSize = 0;
-    
+
         const getDataRange = () => {
-            let dataMinX = 0;
-            let dataMaxX = 10000;
-            let dataMinY = -5000;
-            let dataMaxY = 5000;
-    
-            if (this.data.labels.length > 0) {
-                dataMinX = Math.min(...this.data.labels);
-                dataMaxX = Math.max(...this.data.labels) + 10000;
-            }
-    
-            if (this.data.datasets.length > 0) {
-                this.data.datasets.forEach(dataset => {
-                    if (dataset.data.length > 0) {
-                        dataMinY = Math.min(dataMinY, Math.min(...dataset.data));
-                        dataMaxY = Math.max(dataMaxY, Math.max(...dataset.data));
-                    }
-                });
-                const margin = (dataMaxY - dataMinY) * 0.1;
-                dataMinY -= margin;
-                dataMaxY += margin;
-            }
-    
+            // FOC实际数据范围
+            const totalYMin = -65535;
+            const totalYMax = 65535;
+            
+            // X轴固定范围0~10000ms
+            const totalXRange = 10000;
+
             return axis === 'x' 
-                ? { min: 0, max: Math.max(dataMaxX, 10000) }
-                : { min: Math.max(-65535, dataMinY), max: Math.min(65535, dataMaxY) };
+                ? { min: 0, max: totalXRange }
+                : { min: totalYMin, max: totalYMax };
         };
-    
+
         const onMouseDown = (e) => {
             e.preventDefault();
+            
+            // 检查当前比例是否为100%
+            const dataRange = getDataRange();
+            let currentRangeSize, totalRange;
+            
+            if (axis === 'x') {
+                currentRangeSize = this.chart.options.scales.x.max - this.chart.options.scales.x.min;
+                totalRange = dataRange.max - dataRange.min;
+            } else {
+                currentRangeSize = this.chart.options.scales.y.max - this.chart.options.scales.y.min;
+                totalRange = dataRange.max - dataRange.min;
+            }
+            
+            const ratio = currentRangeSize / totalRange;
+            
+            // 如果占满100%，禁用拖拽
+            if (ratio >= 0.99) return;
+
             isDragging = true;
             startMousePos = axis === 'x' ? e.clientX : e.clientY;
             
@@ -870,12 +519,11 @@ class ChartManager {
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
         };
-    
+
         const onMouseMove = (e) => {
             if (!isDragging) return;
             
             e.preventDefault();
-            e.stopPropagation();
             
             const currentMousePos = axis === 'x' ? e.clientX : e.clientY;
             const mouseDelta = currentMousePos - startMousePos;
@@ -886,12 +534,14 @@ class ChartManager {
             
             if (usableTrackSize <= 0) return;
             
-            const ratio = mouseDelta / usableTrackSize;
+            // 计算拖拽比例
+            const dragRatio = mouseDelta / usableTrackSize;
             const dataRange = getDataRange();
             const totalRange = dataRange.max - dataRange.min;
             const maxOffset = Math.max(0, totalRange - startRangeSize);
             
-            let newStart = startRangeStart + (ratio * maxOffset);
+            // 计算新的起始位置
+            let newStart = startRangeStart + (dragRatio * maxOffset);
             
             // 限制范围
             newStart = Math.max(dataRange.min, Math.min(dataRange.max - startRangeSize, newStart));
@@ -904,20 +554,20 @@ class ChartManager {
                 this.chart.options.scales.y.max = newStart + startRangeSize;
             }
             
-            this.chart.update();
+            this.chart.update('none');
             this.updateScrollbars();
         };
-    
+
         const onMouseUp = () => {
             isDragging = false;
             thumb.style.cursor = 'grab';
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
         };
-    
+
         thumb.addEventListener('mousedown', onMouseDown);
         
-        // 点击轨道跳转到位置
+        // 点击轨道跳转 - 修正位置计算
         track.addEventListener('mousedown', (e) => {
             e.preventDefault();
             if (e.target === thumb) return;
@@ -926,19 +576,32 @@ class ChartManager {
             const clickPos = axis === 'x' ? e.clientX - trackRect.left : e.clientY - trackRect.top;
             const thumbSize = axis === 'x' ? thumb.offsetWidth : thumb.offsetHeight;
             const trackSize = axis === 'x' ? track.offsetWidth : track.offsetHeight;
-            const usableTrackSize = Math.max(0, trackSize - thumbSize);
             
+            // 检查当前比例是否为100%
+            const dataRange = getDataRange();
+            let currentRangeSize;
+            
+            if (axis === 'x') {
+                currentRangeSize = this.chart.options.scales.x.max - this.chart.options.scales.x.min;
+            } else {
+                currentRangeSize = this.chart.options.scales.y.max - this.chart.options.scales.y.min;
+            }
+            
+            const ratio = currentRangeSize / (dataRange.max - dataRange.min);
+            
+            // 如果占满100%，禁用跳转
+            if (ratio >= 0.99) return;
+            
+            const usableTrackSize = Math.max(0, trackSize - thumbSize);
             if (usableTrackSize <= 0) return;
             
-            const ratio = Math.max(0, Math.min(1, clickPos / trackSize));
-            const dataRange = getDataRange();
-            const totalRange = dataRange.max - dataRange.min;
-            const currentRangeSize = axis === 'x' 
-                ? this.chart.options.scales.x.max - this.chart.options.scales.x.min
-                : this.chart.options.scales.y.max - this.chart.options.scales.y.min;
+            // 修正点击位置计算：考虑滑块宽度，使点击中心位置
+            const clickRatio = Math.max(0, Math.min(1, (clickPos - (thumbSize / 2)) / usableTrackSize));
+            const dataRange2 = getDataRange();
+            const totalRange = dataRange2.max - dataRange2.min;
             
-            let newStart = dataRange.min + (ratio * (totalRange - currentRangeSize));
-            newStart = Math.max(dataRange.min, Math.min(dataRange.max - currentRangeSize, newStart));
+            let newStart = dataRange2.min + (clickRatio * (totalRange - currentRangeSize));
+            newStart = Math.max(dataRange2.min, Math.min(dataRange2.max - currentRangeSize, newStart));
             
             if (axis === 'x') {
                 this.chart.options.scales.x.min = newStart;
@@ -948,115 +611,12 @@ class ChartManager {
                 this.chart.options.scales.y.max = newStart + currentRangeSize;
             }
             
-            this.chart.update();
+            this.chart.update('none');
             this.updateScrollbars();
         });
     }
 
-    // 设置图表类型
-    setType(type) {
-        if (this.chart) {
-            this.chart.config.type = type;
-            this.chart.update();
-        }
-    }
-
-    // 设置Y轴范围
-    setYRange(min, max) {
-        if (this.chart) {
-            this.chart.options.scales.y.min = min;
-            this.chart.options.scales.y.max = max;
-            this.chart.update();
-        }
-    }
-
-    // 自动调整Y轴范围
-    autoScaleY() {
-        if (!this.chart || this.data.datasets.length === 0) return;
-        
-        let min = Infinity;
-        let max = -Infinity;
-        
-        // 查找所有数据集的最小最大值
-        this.data.datasets.forEach(dataset => {
-            if (dataset.data.length > 0) {
-                const datasetMin = Math.min(...dataset.data);
-                const datasetMax = Math.max(...dataset.data);
-                
-                min = Math.min(min, datasetMin);
-                max = Math.max(max, datasetMax);
-            }
-        });
-        
-        // 添加一些边距
-        const range = max - min;
-        const margin = range * 0.1;
-        
-        this.setYRange(min - margin, max + margin);
-    }
-
-    // 显示/隐藏数据集
-    toggleDatasetVisibility(index) {
-        if (this.chart && index >= 0 && index < this.data.datasets.length) {
-            const meta = this.chart.getDatasetMeta(index);
-            meta.hidden = !meta.hidden;
-            this.chart.update();
-        }
-    }
-
-    // 根据参数ID更新数据集可视性
-    updateDatasetVisibility(paramId, isVisible) {
-        if (!this.chart) return;
-        
-        // 查找包含参数ID的数据集
-        this.data.datasets.forEach((dataset, index) => {
-            if ((dataset.paramId && dataset.paramId === paramId) || 
-                (dataset.label && dataset.label.includes(paramId))) {
-                const meta = this.chart.getDatasetMeta(index);
-                meta.hidden = !isVisible;
-            }
-        });
-        
-        this.chart.update();
-    }
-
-    // 获取数据集的可视性状态
-    getDatasetVisibility(index) {
-        if (!this.chart || index < 0 || index >= this.data.datasets.length) {
-            return false;
-        }
-        
-        const meta = this.chart.getDatasetMeta(index);
-        return !meta.hidden;
-    }
-
-    // 根据标签名查找数据集索引
-    findDatasetIndexByLabel(labelPattern) {
-        return this.data.datasets.findIndex(dataset => 
-            dataset.label && dataset.label.includes(labelPattern)
-        );
-    }
-
-    // 批量更新数据集可视性
-    updateMultipleDatasetsVisibility(visibilityMap) {
-        if (!this.chart) return;
-        
-        Object.entries(visibilityMap).forEach(([paramId, isVisible]) => {
-            this.updateDatasetVisibility(paramId, isVisible);
-        });
-    }
-
-    // 获取可见的数据集数量
-    getVisibleDatasetCount() {
-        if (!this.chart) return 0;
-        
-        return this.data.datasets.filter((dataset, index) => {
-            const meta = this.chart.getDatasetMeta(index);
-            return !meta.hidden;
-        }).length;
-    }
-
-    // 设置鼠标滚轮缩放 - 以鼠标坐标为中心
+    // 设置鼠标滚轮缩放 - 修正边界处理
     setupMouseWheelZoom() {
         if (!this.canvas) return;
         
@@ -1067,7 +627,7 @@ class ChartManager {
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
             
-            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9; // 反向缩放
+            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
             
             // 获取当前数据范围
             const currentXMin = this.chart.options.scales.x.min;
@@ -1082,15 +642,18 @@ class ChartManager {
             const newXRange = Math.max(100, Math.min(1000000, currentXRange * zoomFactor));
             const newYRange = Math.max(100, Math.min(131070, currentYRange * zoomFactor));
             
-            // 计算鼠标位置对应的数据比例
-            const xRatio = mouseX / rect.width;
-            const yRatio = mouseY / rect.height;
+            // 计算当前鼠标位置对应的数据坐标
+            const xScale = this.chart.scales.x;
+            const yScale = this.chart.scales.y;
+            
+            const dataMouseX = xScale.getValueForPixel(mouseX);
+            const dataMouseY = yScale.getValueForPixel(mouseY);
             
             // 计算新的范围，保持鼠标位置不变
-            const newXMin = Math.max(0, currentXMin + xRatio * (currentXRange - newXRange));
+            const newXMin = Math.max(0, Math.min(1000000 - newXRange, dataMouseX - (mouseX / rect.width) * newXRange));
             const newXMax = newXMin + newXRange;
             
-            const newYMin = Math.max(-65535, currentYMin + yRatio * (currentYRange - newYRange));
+            const newYMin = Math.max(-65535, Math.min(65535 - newYRange, dataMouseY - ((rect.height - mouseY) / rect.height) * newYRange));
             const newYMax = newYMin + newYRange;
             
             // 应用新的范围
@@ -1099,12 +662,9 @@ class ChartManager {
             this.chart.options.scales.y.min = newYMin;
             this.chart.options.scales.y.max = newYMax;
             
-            this.chart.update();
+            this.chart.update('none');
             this.updateScrollbars();
         });
-        
-        // 设置滚动条控制
-        this.setupScrollbarControls();
     }
 }
 
