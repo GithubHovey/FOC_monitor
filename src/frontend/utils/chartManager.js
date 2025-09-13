@@ -438,7 +438,8 @@ class ChartManager {
         const xPosition = Math.max(0, Math.min(100 - xThumbWidth, (xOffset / Math.max(1, maxXOffset)) * (100 - xThumbWidth)));
         xThumb.style.left = `${xPosition}%`;
 
-        const yOffset = totalYMax - viewYMax;
+        // 修正Y轴滚动条方向：从底部开始计算，使滚动条移动方向与视图移动方向一致
+        const yOffset = viewYMin - totalYMin;
         const maxYOffset = totalYRange - viewYRange;
         const yPosition = Math.max(0, Math.min(100 - yThumbHeight, (yOffset / Math.max(1, maxYOffset)) * (100 - yThumbHeight)));
         yThumb.style.top = `${yPosition}%`;
