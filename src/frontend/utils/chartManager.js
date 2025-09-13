@@ -438,8 +438,8 @@ class ChartManager {
         const xPosition = Math.max(0, Math.min(100 - xThumbWidth, (xOffset / Math.max(1, maxXOffset)) * (100 - xThumbWidth)));
         xThumb.style.left = `${xPosition}%`;
 
-        // 修正Y轴滚动条方向：从底部开始计算，使滚动条移动方向与视图移动方向一致
-        const yOffset = viewYMin - totalYMin;
+        // Y轴滚动条位置计算：保持与标准滚动条一致的方向
+        const yOffset = totalYMax - viewYMax;
         const maxYOffset = totalYRange - viewYRange;
         const yPosition = Math.max(0, Math.min(100 - yThumbHeight, (yOffset / Math.max(1, maxYOffset)) * (100 - yThumbHeight)));
         yThumb.style.top = `${yPosition}%`;
@@ -527,7 +527,11 @@ class ChartManager {
             e.preventDefault();
             
             const currentMousePos = axis === 'x' ? e.clientX : e.clientY;
-            const mouseDelta = currentMousePos - startMousePos;
+            // 修正Y轴拖拽方向：使拖拽方向与视图移动方向一致
+            let mouseDelta = currentMousePos - startMousePos;
+            if (axis === 'y') {
+                mouseDelta = -(currentMousePos - startMousePos); // 反向Y轴拖拽方向
+            }
             
             const trackSize = axis === 'x' ? track.offsetWidth : track.offsetHeight;
             const thumbSize = axis === 'x' ? thumb.offsetWidth : thumb.offsetHeight;
@@ -541,7 +545,7 @@ class ChartManager {
             const totalRange = dataRange.max - dataRange.min;
             const maxOffset = Math.max(0, totalRange - startRangeSize);
             
-            // 计算新的起始位置
+            // 计算新的起始位置 - 修正Y轴方向使拖拽方向与视图移动方向一致
             let newStart = startRangeStart + (dragRatio * maxOffset);
             
             // 限制范围
@@ -602,6 +606,12 @@ class ChartManager {
             const totalRange = dataRange2.max - dataRange2.min;
             
             let newStart = dataRange2.min + (clickRatio * (totalRange - currentRangeSize));
+            
+            // 修正Y轴轨道点击方向
+            if (axis === 'y') {
+                // 对于Y轴，点击轨道上方应该显示更高数值（反向计算）
+                newStart = dataRange2.max - currentRangeSize - (clickRatio * (totalRange - currentRangeSize));
+            }
             newStart = Math.max(dataRange2.min, Math.min(dataRange2.max - currentRangeSize, newStart));
             
             if (axis === 'x') {
@@ -654,6 +664,7 @@ class ChartManager {
             const newXMin = Math.max(0, Math.min(1000000 - newXRange, dataMouseX - (mouseX / rect.width) * newXRange));
             const newXMax = newXMin + newXRange;
             
+            // 修正Y轴方向：使鼠标滚轮方向与视图移动方向一致
             const newYMin = Math.max(-65535, Math.min(65535 - newYRange, dataMouseY - ((rect.height - mouseY) / rect.height) * newYRange));
             const newYMax = newYMin + newYRange;
             
