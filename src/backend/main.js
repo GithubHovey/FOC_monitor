@@ -2,6 +2,10 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { SerialPort } = require('serialport');
 
+// 设置SerialPort日志级别以避免console[level]错误
+process.env.DEBUG = ''; // 禁用debug日志
+process.env.SERIALPORT_LOG_LEVEL = 'error'; // 只显示错误日志
+
 // 保持对窗口对象的全局引用
 let mainWindow;
 
@@ -54,7 +58,10 @@ app.on('activate', () => {
   }
 });
 
-// IPC通信处理
+// 串口实例
+let serialPort = null;
+
+// IPC通信处理 - 统一通道名称以匹配preload.js
 ipcMain.handle('get-serial-ports', async () => {
   try {
     const ports = await SerialPort.list();
@@ -65,54 +72,151 @@ ipcMain.handle('get-serial-ports', async () => {
   }
 });
 
-// 串口实例
-let serialPort = null;
-
-ipcMain.handle('open-serial-port', async (event, portName, options) => {
+ipcMain.handle('connect-serial', async (event, portPath, baudRate = 115200) => {
   try {
     if (serialPort && serialPort.isOpen) {
-      await serialPort.close();
+      await new Promise((resolve, reject) => {
+        serialPort.close((error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
     }
     
-    serialPort = new SerialPort(portName, options);
+    // 使用try-catch包装SerialPort实例化，捕获所有错误
+    try {
+      serialPort = new SerialPort({
+        path: portPath,
+        baudRate: baudRate,
+        dataBits: 8,
+        parity: 'none',
+        stopBits: 1,
+        autoOpen: false
+      });
+    } catch (createError) {
+      console.error('创建SerialPort实例失败:', createError);
+      return { success: false, error: `创建串口实例失败: ${createError.message}` };
+    }
     
+    // 手动打开串口
+    await new Promise((resolve, reject) => {
+      serialPort.open((error) => {
+        if (error) {
+          console.error('打开串口失败:', error);
+          reject(new Error(`打开串口失败: ${portPath} - ${error.message}`));
+        } else {
+          resolve();
+        }
+      });
+    });
+    
+    // 设置事件监听 - 使用安全的日志记录
     serialPort.on('data', (data) => {
-      // 将接收到的数据发送到渲染进程
-      mainWindow.webContents.send('serial-data', data);
+      try {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('serial-data', data);
+        }
+      } catch (sendError) {
+        // 使用安全的日志记录方式
+        process.stdout.write(`发送串口数据错误: ${sendError.message}\n`);
+      }
     });
     
     serialPort.on('error', (error) => {
-      mainWindow.webContents.send('serial-error', error.message);
+      try {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('serial-error', error.message);
+        }
+        // 使用安全的日志记录方式
+        process.stdout.write(`串口错误: ${error.message}\n`);
+      } catch (sendError) {
+        process.stdout.write(`发送串口错误失败: ${sendError.message}\n`);
+      }
     });
     
+    // 监听打开事件
+    serialPort.on('open', () => {
+      try {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('serial-status', { status: 'connected', port: portPath });
+        }
+        process.stdout.write(`串口 ${portPath} 已打开\n`);
+      } catch (sendError) {
+        process.stdout.write(`发送串口状态失败: ${sendError.message}\n`);
+      }
+    });
+    
+    console.log(`串口 ${portPath} 连接成功，波特率 ${baudRate}`);
     return { success: true };
+    
   } catch (error) {
+    console.error('连接串口时发生错误:', error);
     return { success: false, error: error.message };
   }
 });
 
-ipcMain.handle('close-serial-port', async () => {
+ipcMain.handle('disconnect-serial', async () => {
   try {
     if (serialPort && serialPort.isOpen) {
-      await serialPort.close();
+      await new Promise((resolve, reject) => {
+        serialPort.close((error) => {
+          if (error) {
+            process.stdout.write(`关闭串口错误: ${error.message}\n`);
+            reject(error);
+          } else {
+            process.stdout.write('串口已关闭\n');
+            resolve();
+          }
+        });
+      });
       serialPort = null;
+      
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('serial-status', { status: 'disconnected' });
+      }
     }
     return { success: true };
   } catch (error) {
+    process.stdout.write(`断开串口连接错误: ${error.message}\n`);
     return { success: false, error: error.message };
   }
 });
 
-ipcMain.handle('write-serial-data', async (event, data) => {
+ipcMain.handle('send-serial-data', async (event, data) => {
   try {
     if (serialPort && serialPort.isOpen) {
-      serialPort.write(data);
+      await new Promise((resolve, reject) => {
+        serialPort.write(data, (error) => {
+          if (error) {
+            process.stdout.write(`发送数据错误: ${error.message}\n`);
+            reject(error);
+          } else {
+            process.stdout.write(`已发送数据: ${data.length} 字节\n`);
+            resolve();
+          }
+        });
+      });
       return { success: true };
     }
     return { success: false, error: '串口未打开' };
   } catch (error) {
+    process.stdout.write(`发送串口数据错误: ${error.message}\n`);
     return { success: false, error: error.message };
   }
+});
+
+// 保持向后兼容的旧通道
+ipcMain.handle('open-serial-port', async (event, portName, options) => {
+  const baudRate = options.baudRate || 115200;
+  return await ipcMain.handle('connect-serial', event, portName, baudRate);
+});
+
+ipcMain.handle('close-serial-port', async () => {
+  return await ipcMain.handle('disconnect-serial', event);
+});
+
+ipcMain.handle('write-serial-data', async (event, data) => {
+  return await ipcMain.handle('send-serial-data', event, data);
 });
 
 // 退出应用前的清理工作

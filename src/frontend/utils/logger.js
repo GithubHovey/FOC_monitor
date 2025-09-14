@@ -156,8 +156,20 @@ class Logger {
         // 添加到显示
         this.displayLog(logEntry);
 
-        // 同时输出到控制台
-        console[level](`[${level.toUpperCase()}] ${message}`, data || '');
+        // 同时输出到控制台 - 使用安全的日志级别
+        const safeLevel = ['debug', 'info', 'warn', 'error'].includes(level) ? level : 'info';
+        const logMessage = `[${level.toUpperCase()}] ${message}`;
+        
+        try {
+            if (data) {
+                console[safeLevel](logMessage, data);
+            } else {
+                console[safeLevel](logMessage);
+            }
+        } catch (consoleError) {
+            // 如果console方法调用失败，使用备用日志记录
+            console.log(`[LOGGER-ERROR] ${logMessage}`, data || '');
+        }
     }
 
     displayLog(logEntry) {
@@ -184,7 +196,28 @@ class Logger {
             dataElement.style.fontSize = '11px';
             dataElement.style.color = '#8b949e';
             dataElement.style.fontFamily = 'Consolas, Monaco, monospace';
-            dataElement.textContent = JSON.stringify(logEntry.data, null, 2);
+            dataElement.style.whiteSpace = 'nowrap'; // 防止换行
+            dataElement.style.overflow = 'hidden';
+            dataElement.style.textOverflow = 'ellipsis';
+            
+            // 简化数组显示，避免多行换行
+            let dataStr;
+            if (Array.isArray(logEntry.data)) {
+                dataStr = `[${logEntry.data.map(item => 
+                    typeof item === 'object' ? JSON.stringify(item) : String(item)
+                ).join(', ')}]`;
+            } else if (typeof logEntry.data === 'object') {
+                dataStr = JSON.stringify(logEntry.data);
+            } else {
+                dataStr = String(logEntry.data);
+            }
+            
+            // 限制长度，避免过长内容
+            if (dataStr.length > 200) {
+                dataStr = dataStr.substring(0, 197) + '...';
+            }
+            
+            dataElement.textContent = dataStr;
             logElement.appendChild(dataElement);
         }
 

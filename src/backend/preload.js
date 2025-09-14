@@ -8,9 +8,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 串口相关API
   // 串口相关API
   getSerialPorts: () => ipcRenderer.invoke('get-serial-ports'),
-  openSerialPort: (portName, options) => ipcRenderer.invoke('open-serial-port', portName, options),
-  closeSerialPort: () => ipcRenderer.invoke('close-serial-port'),
-  writeSerialData: (data) => ipcRenderer.invoke('write-serial-data', data),
+  openSerialPort: (portName, options) => ipcRenderer.invoke('connect-serial', portName, options.baudRate || 115200),
+  closeSerialPort: () => ipcRenderer.invoke('disconnect-serial'),
+  writeSerialData: (data) => ipcRenderer.invoke('send-serial-data', data),
   
   // 监听串口数据
   onSerialData: (callback) => {
