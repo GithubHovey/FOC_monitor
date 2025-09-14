@@ -204,10 +204,10 @@ class FOCMonitorApp {
             this.toggleSerialConnection();
         });
 
-        // 串口管理器事件
-        this.serialManager.onData((data) => {
-            this.handleSerialData(data);
-        });
+        // 串口管理器事件 - 移除重复监听，由DataCommunicationManager统一处理
+        // this.serialManager.onData((data) => {
+        //     this.handleSerialData(data);
+        // });
 
         this.serialManager.onError((error) => {
             window.logger.error('串口错误', error);
@@ -243,6 +243,13 @@ class FOCMonitorApp {
     initDataCommunication() {
         // 使用全局的serialManager实例
         this.dataCommunication = new DataCommunicationManager(window.serialManager);
+        
+        // 监听FOC协议数据，用于图表更新
+        this.serialManager.onData((data) => {
+            if (data.type === 'foc_data' && !this.isPaused) {
+                this.processFOCData(data);
+            }
+        });
     }
 
     // 切换页面
@@ -342,8 +349,11 @@ class FOCMonitorApp {
         }
     }
 
-    // 处理串口数据
-    handleSerialData(data) {
+    // 处理串口数据 - 已重构，由DataCommunicationManager统一处理数据接收
+    // 保留此方法用于兼容，但主要逻辑已移至DataCommunicationManager和processFOCData
+
+    // 处理FOC协议数据
+    processFOCData(data) {
         if (this.isPaused) return;
         
         this.dataPoints++;
@@ -351,26 +361,6 @@ class FOCMonitorApp {
         // 更新数据速率显示
         this.updateDataRate();
         
-        // 将所有接收到的数据以16进制形式显示在读写栏中
-        if (data.raw) {
-            // 显示原始16进制数据
-            this.displayReceivedHex(data.raw);
-        } else if (data.data) {
-            // 显示数据部分
-            this.displayReceivedHex(data.data);
-        }
-        
-        if (data.type === 'foc_data') {
-            // 处理FOC协议数据
-            this.processFOCData(data);
-        } else if (data.type === 'raw_data') {
-            // 处理原始数据
-            console.log('收到原始数据:', data.text);
-        }
-    }
-
-    // 处理FOC协议数据
-    processFOCData(data) {
         const currentTime = (Date.now() - this.startTime) / 1000; // 转换为秒
         
         switch (data.command) {
@@ -609,30 +599,7 @@ class FOCMonitorApp {
         return csv;
     }
 
-    // 显示接收到的16进制数据
-    displayReceivedHex(data) {
-        const receiveDataDisplay = document.getElementById('receive-data-display');
-        if (!receiveDataDisplay) return;
 
-        const timestamp = new Date().toLocaleTimeString();
-        const bytes = Array.from(new Uint8Array(data));
-        const hexDisplay = bytes.map(byte => 
-            byte.toString(16).padStart(2, '0').toUpperCase()
-        ).join(' ');
-
-        // 添加到现有内容的末尾
-        const currentText = receiveDataDisplay.value;
-        const newLine = `[${timestamp}] ${hexDisplay}`;
-        
-        if (currentText) {
-            receiveDataDisplay.value = currentText + '\n' + newLine;
-        } else {
-            receiveDataDisplay.value = newLine;
-        }
-
-        // 自动滚动到底部
-        receiveDataDisplay.scrollTop = receiveDataDisplay.scrollHeight;
-    }
 
     // 显示发送的16进制数据
     displaySentHex(data) {
@@ -1068,10 +1035,9 @@ class FOCMonitorApp {
                 break;
         }
 
-        // 发送数据并显示16进制
+        // 发送数据并显示十六进制
         this.serialManager.sendData(data).then(() => {
             this.displaySentHex(data);
-            console.log(`发送${controlId}命令成功，值: ${value}`);
         }).catch(error => {
             this.showError(`发送命令失败: ${error.message}`);
         });
@@ -1101,7 +1067,6 @@ class FOCMonitorApp {
 
         this.serialManager.sendData(data).then(() => {
             this.displaySentHex(data);
-            console.log('校准命令发送成功');
         }).catch(error => {
             this.showError(`发送校准命令失败: ${error.message}`);
         });
@@ -1136,7 +1101,6 @@ class FOCMonitorApp {
 
         this.serialManager.sendData(data).then(() => {
             this.displaySentHex(data);
-            console.log('状态上报已启用');
             this.showSuccess('状态上报已启用');
         }).catch(error => {
             this.showError(`状态上报启用失败: ${error.message}`);
@@ -1172,7 +1136,6 @@ class FOCMonitorApp {
 
         this.serialManager.sendData(data).then(() => {
             this.displaySentHex(data);
-            console.log('状态上报已禁用');
             this.showSuccess('状态上报已禁用');
         }).catch(error => {
             this.showError(`状态上报禁用失败: ${error.message}`);

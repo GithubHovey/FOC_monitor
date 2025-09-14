@@ -667,7 +667,7 @@ body:not(.fullscreen) .data-communication {
     max-height: 150px;
     border: 1px solid #484f58;
     border-radius: 4px;
-    background: #0d1117;
+    background: #2d3748; /* 灰色背景 */
     overflow: hidden; /* 确保内容不溢出 */
 }
 
@@ -679,8 +679,8 @@ body:not(.fullscreen) .data-communication {
     border-radius: 0;
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
     font-size: 11px;
-    background: #0d1117;
-    color: #c9d1d9;
+    background: #2d3748; /* 灰色背景 */
+    color: #ffffff; /* 白色字体 */
     resize: none; /* 禁止调整大小，防止溢出 */
     line-height: 1.3;
     box-sizing: border-box; /* 确保padding不增加总尺寸 */
@@ -702,8 +702,8 @@ body:not(.fullscreen) .data-communication {
     border-radius: 4px;
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
     font-size: 11px;
-    background: #0d1117;
-    color: #c9d1d9;
+    background: #2d3748; /* 灰色背景 */
+    color: #ffffff; /* 白色字体 */
 }
 
 .comm-section h4 {
@@ -717,6 +717,8 @@ body:not(.fullscreen) .data-communication {
     resize: vertical;
     min-height: 80px;
     max-height: 200px;
+    background: #2d3748; /* 灰色背景 */
+    color: #ffffff; /* 白色字体 */
 }
 
 
@@ -1062,8 +1064,8 @@ body:not(.fullscreen) .data-communication {
     border-radius: 0;
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
     font-size: 11px;
-    background: #0d1117;
-    color: #c9d1d9;
+    background: #2d3748; /* 灰色背景 */
+    color: #ffffff; /* 白色字体 */
     resize: none;
     line-height: 1.3;
     overflow-y: auto;
@@ -1102,7 +1104,7 @@ body:not(.fullscreen) .data-communication {
     max-width: calc(50% - 10px);
     display: flex;
     flex-direction: column;
-    background: white;
+    background: #21262d; /* 深色背景 */
     border-radius: 8px;
     padding: 10px; /* 进一步减小内边距 */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1130,11 +1132,12 @@ body:not(.fullscreen) .data-communication {
     min-height: 80px;
     max-height: 150px; /* 进一步限制最大高度 */
     padding: 6px; /* 减小内边距 */
-    border: 1px solid #bdc3c7;
+    border: 1px solid #484f58;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
     font-size: 11px;
-    background: #f8f9fa;
+    background: #2d3748; /* 灰色背景 */
+    color: #ffffff; /* 白色字体 */
     resize: vertical;
     line-height: 1.2; /* 减小行高 */
 }
@@ -1149,10 +1152,12 @@ body:not(.fullscreen) .data-communication {
 .send-controls input[type="text"] {
     flex: 1;
     padding: 6px 8px;
-    border: 1px solid #bdc3c7;
+    border: 1px solid #484f58;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
     font-size: 11px;
+    background: #2d3748; /* 灰色背景 */
+    color: #ffffff; /* 白色字体 */
 }
 
 .send-controls .control-btn, .receive-controls .control-btn {
@@ -1248,14 +1253,24 @@ body:not(.fullscreen) .data-communication {
     border: 1px solid #30363d;
     border-radius: 4px;
     font-size: 12px;
-    background: #0d1117;
-    color: #c9d1d9;
+    background: #2d3748; /* 灰色背景 */
+    color: #ffffff; /* 白色字体 */
 }
 
 .data-display {
-    background: #0d1117;
+    background: #2d3748; /* 灰色背景 */
+    color: #ffffff; /* 白色字体 */
     min-height: 30px;
     word-break: break-all;
+}
+
+/* 占位符文字颜色 */
+.data-input::placeholder {
+    color: #a0aec0; /* 浅灰色占位符 */
+}
+
+.data-display::placeholder {
+    color: #a0aec0; /* 浅灰色占位符 */
 }
 
 .rw-controls {

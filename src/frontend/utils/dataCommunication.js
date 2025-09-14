@@ -114,16 +114,9 @@ class DataCommunicationManager {
             
             this.showMessage('数据发送成功', 'success');
             
-            if (window.logger) {
-                window.logger.info(`发送数据: ${this.bytesToHexString(bytes)}`);
-            }
-            
         } catch (error) {
             console.error('发送数据失败:', error);
             this.showMessage('发送失败: ' + error.message, 'error');
-            if (window.logger) {
-                window.logger.error('发送数据失败', error.message);
-            }
         }
     }
 
@@ -160,7 +153,20 @@ class DataCommunicationManager {
 
     handleReceivedData(data) {
         const timestamp = new Date().toLocaleTimeString();
-        const bytes = Array.from(new Uint8Array(data));
+        let bytes;
+        
+        // 处理不同格式的数据
+        if (data.raw) {
+            // 来自FOC协议解析器的原始数据
+            bytes = Array.from(new Uint8Array(data.raw));
+        } else if (data.data) {
+            // 来自FOC协议解析器的数据部分
+            bytes = Array.from(new Uint8Array(data.data));
+        } else {
+            // 直接来自串口的原始数据
+            bytes = Array.from(new Uint8Array(data));
+        }
+        
         const hexDisplay = this.bytesToHexString(bytes);
         
         this.receiveHistory.push({
@@ -179,9 +185,7 @@ class DataCommunicationManager {
             this.updateReceiveDisplay();
         }
         
-        if (window.logger) {
-            window.logger.info(`接收数据: ${hexDisplay}`);
-        }
+
     }
 
     bytesToHexString(bytes) {
@@ -230,15 +234,9 @@ class DataCommunicationManager {
         if (this.elements.showRawDataCheckbox.checked) {
             // 如果启用显示，立即更新显示
             this.updateReceiveDisplay();
-            if (window.logger) {
-                window.logger.info('已启用原始数据显示');
-            }
         } else {
             // 如果禁用显示，清空显示区域
             this.elements.receiveDataDisplay.value = '';
-            if (window.logger) {
-                window.logger.info('已禁用原始数据显示');
-            }
         }
     }
 
