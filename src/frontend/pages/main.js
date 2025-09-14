@@ -1045,6 +1045,17 @@ class FOCMonitorApp {
                 this.sendModeCommand(e.target.id, parseFloat(e.target.value));
             });
         });
+
+        // 监听模式使能复选框
+        if (modeEnableCheckbox) {
+            modeEnableCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    this.startModePeriodicSend();
+                } else {
+                    this.stopModePeriodicSend();
+                }
+            });
+        }
     }
 
     // 发送模式命令
@@ -1208,25 +1219,242 @@ class FOCMonitorApp {
         return modeNames[mode] || '未知模式';
     }
 
-    // 切换控制模式
-    switchControlMode(mode) {
-        let command;
-        switch (mode) {
-            case 'position':
-                command = 0x11; // 位置模式
-                break;
-            case 'torque':
-                command = 0x12; // 力矩模式
-                break;
-            default:
-                console.error('未知的控制模式:', mode);
-                return;
+    // 启动模式周期性数据发送
+    startModePeriodicSend() {
+        if (this.modeSendInterval) {
+            clearInterval(this.modeSendInterval);
         }
         
-        // 发送控制模式设置命令
-        this.serialManager.sendFOCCommand(command).catch(error => {
-            this.showError('切换控制模式失败: ' + error.message);
+        this.modeSendInterval = setInterval(() => {
+            this.sendModePeriodicData();
+        }, 10); // 每10ms发送一次
+    }
+
+    // 停止模式周期性数据发送
+    stopModePeriodicSend() {
+        if (this.modeSendInterval) {
+            clearInterval(this.modeSendInterval);
+            this.modeSendInterval = null;
+        }
+    }
+
+    // 发送模式周期性数据
+    sendModePeriodicData() {
+        const modeEnableCheckbox = document.getElementById('mode-enable-checkbox');
+        if (!modeEnableCheckbox || !modeEnableCheckbox.checked) {
+            return;
+        }
+
+        if (!this.serialManager || !this.serialManager.isConnected) {
+            return;
+        }
+
+        const modeSelect = document.getElementById('control-mode-select');
+        const selectedMode = modeSelect ? modeSelect.value : 'torque';
+
+        // 根据当前模式发送对应的数据包
+        let data = null;
+        switch (selectedMode) {
+            case 'torque':
+                data = this.buildTorqueModePacket();
+                break;
+            case 'speed':
+                data = this.buildSpeedModePacket();
+                break;
+            case 'position':
+                data = this.buildPositionModePacket();
+                break;
+            case 'calibration':
+                data = this.buildCalibrationModePacket();
+                break;
+            case 'status':
+                data = this.buildStatusModePacket();
+                break;
+        }
+
+        if (data) {
+            this.serialManager.sendData(data).catch(error => {
+                console.error('模式数据发送失败:', error);
+            });
+        }
+    }
+
+    // 构建力矩模式数据包
+    buildTorqueModePacket() {
+        const torqueSlider = document.getElementById('torque-slider');
+        const torqueValue = torqueSlider ? parseFloat(torqueSlider.value) : 0;
+        
+        // 根据协议手册：力矩控制命令 0x0A
+        const data = new Uint8Array(14);
+        data[0] = 0xAA; // 包头
+        data[1] = 0x0A; // 命令字：力矩控制
+        
+        // 将0-100的百分比转换为mA单位的电流值
+        const current_mA = Math.round(torqueValue * 100); // 0-100 -> 0-10000mA
+        data[2] = current_mA & 0xFF;        // 电流低字节
+        data[3] = (current_mA >> 8) & 0xFF; // 电流高字节
+        
+        // 其余字节填充0
+        for (let i = 4; i < 12; i++) {
+            data[i] = 0;
+        }
+        
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 1; i < 12; i++) {
+            checksum += data[i];
+        }
+        data[11] = checksum & 0xFF;
+        data[12] = 0x55; // 包尾
+        data[13] = 0x55;
+
+        return data;
+    }
+
+    // 构建速度模式数据包
+    buildSpeedModePacket() {
+        const speedSlider = document.getElementById('speed-slider');
+        const speedValue = speedSlider ? parseFloat(speedSlider.value) : 0;
+        
+        // 根据协议手册：速度控制命令 0x0B
+        const data = new Uint8Array(14);
+        data[0] = 0xAA; // 包头
+        data[1] = 0x0B; // 命令字：速度控制
+        
+        // 将0-100的百分比映射到RPM范围
+        const speed_RPM = Math.round(speedValue * 327.67); // 0-100 -> 0-32767 RPM
+        data[2] = speed_RPM & 0xFF;        // 速度低字节
+        data[3] = (speed_RPM >> 8) & 0xFF; // 速度高字节
+        
+        // 其余字节填充0
+        for (let i = 4; i < 12; i++) {
+            data[i] = 0;
+        }
+        
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 1; i < 12; i++) {
+            checksum += data[i];
+        }
+        data[11] = checksum & 0xFF;
+        data[12] = 0x55; // 包尾
+        data[13] = 0x55;
+
+        return data;
+    }
+
+    // 构建位置模式数据包
+    buildPositionModePacket() {
+        const positionSlider = document.getElementById('position-slider');
+        const positionValue = positionSlider ? parseFloat(positionSlider.value) : 0;
+        
+        // 根据协议手册：位置控制命令 0x0C
+        const data = new Uint8Array(14);
+        data[0] = 0xAA; // 包头
+        data[1] = 0x0C; // 命令字：位置控制
+        
+        // 将0-360度的角度转换为0.1度单位
+        const position_01deg = Math.round(positionValue * 10); // 0-360 -> 0-3600 (0.1度单位)
+        data[2] = position_01deg & 0xFF;        // 位置低字节
+        data[3] = (position_01deg >> 8) & 0xFF; // 位置高字节
+        
+        // 其余字节填充0
+        for (let i = 4; i < 12; i++) {
+            data[i] = 0;
+        }
+        
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 1; i < 12; i++) {
+            checksum += data[i];
+        }
+        data[11] = checksum & 0xFF;
+        data[12] = 0x55; // 包尾
+        data[13] = 0x55;
+
+        return data;
+    }
+
+    // 构建校准模式数据包
+    buildCalibrationModePacket() {
+        // 校准模式不需要周期性发送，返回null
+        return null;
+    }
+
+    // 构建状态上报模式数据包
+    buildStatusModePacket() {
+        // 状态上报模式：发送查询命令 0x09
+        const data = new Uint8Array(14);
+        data[0] = 0xAA; // 包头
+        data[1] = 0x09; // 命令字：状态上报
+        
+        // 其余字节填充0
+        for (let i = 2; i < 12; i++) {
+            data[i] = 0;
+        }
+        
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 1; i < 12; i++) {
+            checksum += data[i];
+        }
+        data[11] = checksum & 0xFF;
+        data[12] = 0x55; // 包尾
+        data[13] = 0x55;
+
+        return data;
+    }
+
+    // 模式数据接收处理函数（预留空白函数）
+    handleModeDataReceived(data) {
+        // TODO: 实现模式数据接收处理
+        // 预留接口，用于后续实现状态数据接收
+        console.log('模式数据接收处理预留函数，收到数据长度:', data.length);
+    }
+
+    // 切换控制模式
+    switchControlMode(mode) {
+        const modeControls = document.querySelectorAll('.mode-control');
+        const modeSelect = document.getElementById('control-mode-select');
+        
+        // 隐藏所有模式控制
+        modeControls.forEach(control => {
+            control.style.display = 'none';
         });
+        
+        // 显示选中的模式控制
+        const selectedModeControl = document.querySelector(`.${mode}-mode`);
+        if (selectedModeControl) {
+            selectedModeControl.style.display = 'block';
+        }
+        
+        // 更新选择框
+        if (modeSelect) {
+            modeSelect.value = mode;
+        }
+        
+        // 更新模式显示
+        const modeDisplay = document.getElementById('current-mode-display');
+        if (modeDisplay) {
+            modeDisplay.textContent = this.getModeDisplayName(mode);
+        }
+        
+        // 停止当前的周期性发送
+        this.stopModePeriodicSend();
+        
+        // 根据模式启用状态决定是否启动新的周期性发送
+        const modeEnableCheckbox = document.getElementById('mode-enable-checkbox');
+        if (modeEnableCheckbox && modeEnableCheckbox.checked) {
+            // 延迟启动，确保模式切换完成
+            setTimeout(() => {
+                this.startModePeriodicSend();
+            }, 100);
+        }
+        
+        // 状态上报模式特殊处理
+        if (mode === 'status') {
+            this.sendStatusEnableCommand();
+        }
     }
 
 
@@ -1246,6 +1474,9 @@ class FOCMonitorApp {
 
     // 销毁应用
     destroy() {
+        // 停止周期性数据发送
+        this.stopModePeriodicSend();
+        
         this.serialManager.destroy();
         
         if (this.chartManager) {
