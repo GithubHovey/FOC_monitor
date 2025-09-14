@@ -620,6 +620,47 @@ body:not(.fullscreen) .data-communication {
     margin-bottom: 8px;
 }
 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.section-header h4 {
+    margin: 0;
+    color: #f0f6fc;
+}
+
+.raw-data-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #c9d1d9;
+    cursor: pointer;
+    user-select: none;
+}
+
+.raw-data-toggle.compact {
+    font-size: 12px;
+    gap: 4px;
+}
+
+.raw-data-toggle input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+    transform: scale(0.9);
+}
+
+.raw-data-toggle span {
+    font-weight: 500;
+}
+
+.raw-data-toggle.compact span {
+    font-weight: normal;
+}
+
 .hex-display-area {
     flex: 1;
     min-height: 100px;

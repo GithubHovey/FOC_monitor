@@ -22,7 +22,8 @@ class DataCommunicationManager {
             sendHexBtn: document.getElementById('send-hex-btn'),
             clearSendBtn: document.getElementById('clear-send-btn'),
             clearReceiveBtn: document.getElementById('clear-receive-btn'),
-            saveReceiveBtn: document.getElementById('save-receive-btn')
+            saveReceiveBtn: document.getElementById('save-receive-btn'),
+            showRawDataCheckbox: document.getElementById('show-raw-data')
         };
     }
 
@@ -58,6 +59,11 @@ class DataCommunicationManager {
         // 输入验证
         this.elements.hexInput.addEventListener('input', (e) => {
             this.validateHexInput(e.target);
+        });
+
+        // 原始数据显示控制
+        this.elements.showRawDataCheckbox.addEventListener('change', () => {
+            this.toggleRawDataDisplay();
         });
     }
 
@@ -168,8 +174,10 @@ class DataCommunicationManager {
             this.receiveHistory.shift();
         }
 
-        // 更新显示
-        this.updateReceiveDisplay();
+        // 更新显示（如果启用了原始数据显示）
+        if (this.elements.showRawDataCheckbox.checked) {
+            this.updateReceiveDisplay();
+        }
         
         if (window.logger) {
             window.logger.info(`接收数据: ${hexDisplay}`);
@@ -216,6 +224,22 @@ class DataCommunicationManager {
         this.receiveHistory = [];
         this.updateReceiveDisplay();
         this.showMessage('已清空接收记录', 'info');
+    }
+
+    toggleRawDataDisplay() {
+        if (this.elements.showRawDataCheckbox.checked) {
+            // 如果启用显示，立即更新显示
+            this.updateReceiveDisplay();
+            if (window.logger) {
+                window.logger.info('已启用原始数据显示');
+            }
+        } else {
+            // 如果禁用显示，清空显示区域
+            this.elements.receiveDataDisplay.value = '';
+            if (window.logger) {
+                window.logger.info('已禁用原始数据显示');
+            }
+        }
     }
 
     saveReceiveData() {

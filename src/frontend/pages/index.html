@@ -120,7 +120,9 @@
                 <!-- 数据通信区域 -->
                 <div class="data-communication">
                     <div class="comm-section">
-                        <h4>写入数据</h4>
+                        <div class="section-header">
+                            <h4>写入数据</h4>
+                        </div>
                         <div class="hex-display-area">
                             <textarea id="send-data-display" readonly placeholder="上位机发送的数据将在此显示（十六进制）..."></textarea>
                         </div>
@@ -132,7 +134,13 @@
                     </div>
                     
                     <div class="comm-section">
-                        <h4>读取数据</h4>
+                        <div class="section-header">
+                            <h4>读取数据</h4>
+                            <label class="raw-data-toggle compact">
+                                <input type="checkbox" id="show-raw-data" checked>
+                                <span>显示原始数据</span>
+                            </label>
+                        </div>
                         <div class="hex-display-area">
                             <textarea id="receive-data-display" readonly placeholder="上位机接收的数据将在此显示（十六进制）..."></textarea>
                         </div>
