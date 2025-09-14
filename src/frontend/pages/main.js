@@ -669,34 +669,64 @@ class FOCMonitorApp {
     initModeControls() {
         // 模式选择器事件 - 选择后立即切换
         const modeSelector = document.getElementById('control-mode-select');
+        const modeEnableCheckbox = document.getElementById('mode-enable-checkbox');
+        const modeSection = document.querySelector('.mode-section');
         
         if (!modeSelector) {
             console.error('模式选择器未找到');
             return;
         }
 
-        // 选择器变化时立即切换
+        // 模式启用/禁用控制
+        if (modeEnableCheckbox && modeSection) {
+            // 初始化状态
+            if (!modeEnableCheckbox.checked) {
+                modeSection.classList.add('disabled');
+            }
+
+            // 监听启用状态变化
+            modeEnableCheckbox.addEventListener('change', () => {
+                if (modeEnableCheckbox.checked) {
+                    modeSection.classList.remove('disabled');
+                    this.showSuccess('模式控制已启用');
+                } else {
+                    modeSection.classList.add('disabled');
+                    this.showWarning('模式控制已禁用');
+                }
+            });
+        }
+
+        // 选择器变化时立即切换（仅在启用状态下）
         modeSelector.addEventListener('change', () => {
+            if (modeEnableCheckbox && !modeEnableCheckbox.checked) {
+                return; // 如果禁用则不处理
+            }
             const selectedMode = modeSelector.value;
             this.updateModeControls(selectedMode);
             this.showSuccess(`已切换到${this.getModeDisplayName(selectedMode)}`);
         });
 
-        // 初始化默认模式
-        this.updateModeControls('torque');
+        // 初始化默认模式（仅在启用状态下）
+        if (!modeEnableCheckbox || modeEnableCheckbox.checked) {
+            this.updateModeControls('torque');
+        }
 
-        // 进度条事件 - 所有模式都支持实时发送
+        // 进度条事件 - 仅在启用状态下支持实时发送
         this.initSliderEvents();
 
-        // 校准模式 - 直接发送
+        // 校准模式 - 仅在启用状态下可发送
         const calibrateBtn = document.getElementById('send-calibration-btn');
         if (calibrateBtn) {
             calibrateBtn.addEventListener('click', () => {
+                if (modeEnableCheckbox && !modeEnableCheckbox.checked) {
+                    this.showWarning('请先启用模式控制');
+                    return;
+                }
                 this.sendCalibrationCommand();
             });
         }
 
-        // 状态上报模式 - 切换到该模式时自动启用状态上报
+        // 状态上报模式 - 仅在启用状态下可切换
         // 无需按钮，状态上报将在切换到该模式时自动处理
     }
 
@@ -778,7 +808,8 @@ class FOCMonitorApp {
         const resultDisplay = document.getElementById('rw-result-display');
 
         try {
-            const idHex = parseInt(dataId, 16);
+            // 移除0x前缀并正确解析十六进制
+            const idHex = parseInt(dataId.replace('0x', ''), 16);
             
             if (mode === 'read') {
                 await this.sendReadCommand(idHex, resultDisplay);
@@ -796,9 +827,9 @@ class FOCMonitorApp {
 
     // 发送读取命令
     async sendReadCommand(dataId, resultDisplay) {
-        if (!this.serialManager.isConnected()) {
-            throw new Error('请先连接串口');
-        }
+        if (!this.serialManager.isConnected) {
+                throw new Error('请先连接串口');
+            }
 
         // 构建读取命令包：AA 02 [数据ID高字节] [数据ID低字节] 00 00 00 00 00 00 00 [CHK] 55
         const command = 0x02; // 读数据命令
@@ -853,9 +884,9 @@ class FOCMonitorApp {
 
     // 发送写入命令
     async sendWriteCommand(dataId, value, resultDisplay) {
-        if (!this.serialManager.isConnected()) {
-            throw new Error('请先连接串口');
-        }
+        if (!this.serialManager.isConnected) {
+                throw new Error('请先连接串口');
+            }
 
         // 构建写入命令包：AA 01 [数据ID高字节] [数据ID低字节] [数据4字节] 00 00 00 00 [CHK] 55
         const command = 0x01; // 写数据命令
@@ -868,10 +899,10 @@ class FOCMonitorApp {
         // 将float值转换为4字节小端格式
         const floatBytes = new Float32Array([value]);
         const bytes = new Uint8Array(floatBytes.buffer);
-        packet[4] = bytes[0];
+        packet[4] = bytes[0];  // 最低有效字节
         packet[5] = bytes[1];
         packet[6] = bytes[2];
-        packet[7] = bytes[3];
+        packet[7] = bytes[3];  // 最高有效字节
 
         // 其余数据区填充0
         for (let i = 8; i < 12; i++) {
@@ -949,6 +980,15 @@ class FOCMonitorApp {
     showRWResult(displayElement, message, type = 'info') {
         displayElement.textContent = message;
         displayElement.className = `result-display ${type}`;
+        
+        // 添加时间戳
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+        
+        // 如果是错误，也显示在控制台
+        if (type === 'error') {
+            console.error(`FOC Error: ${message}`);
+        }
     }
 
     // 更新模式控制界面
@@ -977,6 +1017,8 @@ class FOCMonitorApp {
     // 初始化进度条事件
     initSliderEvents() {
         const sliders = document.querySelectorAll('input[type="range"]');
+        const modeEnableCheckbox = document.getElementById('mode-enable-checkbox');
+        
         sliders.forEach(slider => {
             // 获取对应的值显示元素
             const valueDisplayId = slider.id.replace('-slider', '-value');
@@ -989,6 +1031,11 @@ class FOCMonitorApp {
 
             // 值变化事件（实时发送）
             slider.addEventListener('input', (e) => {
+                // 检查模式控制是否启用
+                if (modeEnableCheckbox && !modeEnableCheckbox.checked) {
+                    return; // 如果禁用则不处理
+                }
+                
                 const valueDisplayId = e.target.id.replace('-slider', '-value');
                 const valueDisplay = document.getElementById(valueDisplayId);
                 if (valueDisplay) {
@@ -1002,7 +1049,7 @@ class FOCMonitorApp {
 
     // 发送模式命令
     sendModeCommand(controlId, value) {
-        if (!this.serialManager || !this.serialManager.isConnected()) {
+        if (!this.serialManager || !this.serialManager.isConnected) {
             this.showError('串口未连接，无法发送命令');
             return;
         }
@@ -1045,7 +1092,7 @@ class FOCMonitorApp {
 
     // 发送校准命令
     sendCalibrationCommand() {
-        if (!this.serialManager || !this.serialManager.isConnected()) {
+        if (!this.serialManager || !this.serialManager.isConnected) {
             this.showError('串口未连接，无法发送命令');
             return;
         }
@@ -1074,7 +1121,7 @@ class FOCMonitorApp {
 
     // 发送状态上报启用命令
     sendStatusEnableCommand() {
-        if (!this.serialManager || !this.serialManager.isConnected()) {
+        if (!this.serialManager || !this.serialManager.isConnected) {
             this.showError('串口未连接，无法发送命令');
             return;
         }

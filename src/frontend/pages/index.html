@@ -156,7 +156,13 @@
             <aside class="control-panel">
                 <!-- 模式设置功能栏 -->
                 <div class="mode-section">
-                    <h3>当前模式</h3>
+                    <div class="mode-section-header">
+                        <h3>当前模式</h3>
+                        <label class="mode-enable-toggle">
+                            <input type="checkbox" id="mode-enable-checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                    </div>
                     
                     <!-- 模式选择 -->
                     <div class="mode-selector">
@@ -279,6 +285,12 @@
                         <div id="data-value-display" class="data-display" style="display: none;"></div>
                     </div>
 
+                    <!-- 结果显示区域 -->
+                    <div class="rw-result-area">
+                        <label>执行结果:</label>
+                        <div id="rw-result-display" class="result-display"></div>
+                    </div>
+                    
                     <!-- 操作按钮 -->
                     <div class="rw-controls">
                         <button id="execute-rw-btn" class="control-btn">读取数据</button>
