@@ -831,16 +831,15 @@ class FOCMonitorApp {
                 throw new Error('请先连接串口');
             }
 
-        // 构建读取命令包：AA 02 [数据ID高字节] [数据ID低字节] 00 00 00 00 00 00 00 [CHK] 55
+        // 构建读取命令包：AA 02 [数据ID] 00 00 00 00 00 00 00 00 [CHK] 55
         const command = 0x02; // 读数据命令
         const packet = new Uint8Array(14);
         packet[0] = 0xAA; // 包头
         packet[1] = command; // 命令
-        packet[2] = (dataId >> 8) & 0xFF; // 数据ID高字节
-        packet[3] = dataId & 0xFF; // 数据ID低字节
+        packet[2] = dataId & 0xFF; // 数据ID（单字节）
         
         // 其余数据区填充0
-        for (let i = 4; i < 12; i++) {
+        for (let i = 3; i < 12; i++) {
             packet[i] = 0;
         }
         
@@ -888,24 +887,23 @@ class FOCMonitorApp {
                 throw new Error('请先连接串口');
             }
 
-        // 构建写入命令包：AA 01 [数据ID高字节] [数据ID低字节] [数据4字节] 00 00 00 00 [CHK] 55
+        // 构建写入命令包：AA 01 [数据ID] [数据4字节] 00 00 00 00 00 [CHK] 55
         const command = 0x01; // 写数据命令
         const packet = new Uint8Array(14);
         packet[0] = 0xAA; // 包头
         packet[1] = command; // 命令
-        packet[2] = (dataId >> 8) & 0xFF; // 数据ID高字节
-        packet[3] = dataId & 0xFF; // 数据ID低字节
+        packet[2] = dataId & 0xFF; // 数据ID（单字节）
 
         // 将float值转换为4字节小端格式
         const floatBytes = new Float32Array([value]);
         const bytes = new Uint8Array(floatBytes.buffer);
-        packet[4] = bytes[0];  // 最低有效字节
-        packet[5] = bytes[1];
-        packet[6] = bytes[2];
-        packet[7] = bytes[3];  // 最高有效字节
+        packet[3] = bytes[0];  // 最低有效字节
+        packet[4] = bytes[1];
+        packet[5] = bytes[2];
+        packet[6] = bytes[3];  // 最高有效字节
 
         // 其余数据区填充0
-        for (let i = 8; i < 12; i++) {
+        for (let i = 7; i < 12; i++) {
             packet[i] = 0;
         }
 
@@ -952,8 +950,8 @@ class FOCMonitorApp {
         if (data.length >= 14) {
             const command = data[1];
             if (command === 0x02) { // 读数据响应
-                const dataId = (data[2] << 8) | data[3]; // 高字节在前
-                const value = new Float32Array(data.slice(4, 8).buffer)[0];
+                const dataId = data[2]; // 数据ID（单字节）
+                const value = new Float32Array(data.slice(3, 7).buffer)[0];
                 
                 document.getElementById('data-value-display').textContent = value.toFixed(4);
             }
@@ -965,7 +963,7 @@ class FOCMonitorApp {
         if (data.length >= 14) {
             const command = data[1];
             if (command === 0x01) { // 写数据响应
-                const dataId = (data[2] << 8) | data[3]; // 高字节在前
+                const dataId = data[2]; // 数据ID（单字节）
             }
         }
     }

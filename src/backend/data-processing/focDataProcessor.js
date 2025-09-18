@@ -227,9 +227,9 @@ class FOCDataProcessor {
     parseParameterSetting(packet) {
         return {
             type: 'parameter_setting',
-            parameterId: packet[3],
-            parameterValue: this.readFloat32(packet, 4),
-            success: packet[8] === 0x01
+            parameterId: packet[2], // 数据ID在索引2位置
+            parameterValue: this.readFloat32(packet, 3), // 数据值从索引3开始
+            success: packet[7] === 0x01 // 成功标志在索引7位置
         };
     }
 
@@ -437,15 +437,48 @@ class FOCDataProcessor {
     }
 
     generateParameterReadCommand(parameterId) {
-        const data = Buffer.from([parameterId]);
-        return this.generateCommand(0x04, data); // 参数读取命令
+        // 生成参数读取命令：AA 02 [数据ID] 00 00 00 00 00 00 00 00 [CHK] 55
+        const packet = Buffer.alloc(14);
+        packet[0] = 0xAA; // 包头
+        packet[1] = 0x02; // 读数据命令
+        packet[2] = parameterId; // 数据ID（单字节）
+        
+        // 其余数据区填充0
+        packet.fill(0, 3, 12);
+        
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 0; i < 12; i++) {
+            checksum += packet[i];
+        }
+        packet[12] = checksum & 0xFF; // 校验和
+        packet[13] = 0x55; // 包尾
+        
+        return packet;
     }
 
     generateParameterWriteCommand(parameterId, value) {
-        const data = Buffer.alloc(5);
-        data.writeUInt8(parameterId, 0);
-        data.writeFloatLE(value, 1);
-        return this.generateCommand(0x05, data); // 参数写入命令
+        // 生成参数写入命令：AA 01 [数据ID] [数据4字节] 00 00 00 00 00 [CHK] 55
+        const packet = Buffer.alloc(14);
+        packet[0] = 0xAA; // 包头
+        packet[1] = 0x01; // 写数据命令
+        packet[2] = parameterId; // 数据ID（单字节）
+        
+        // 写入float值（4字节小端格式）
+        packet.writeFloatLE(value, 3);
+        
+        // 其余数据区填充0
+        packet.fill(0, 7, 12);
+        
+        // 计算校验和
+        let checksum = 0;
+        for (let i = 0; i < 12; i++) {
+            checksum += packet[i];
+        }
+        packet[12] = checksum & 0xFF; // 校验和
+        packet[13] = 0x55; // 包尾
+        
+        return packet;
     }
 
     // 销毁处理器
